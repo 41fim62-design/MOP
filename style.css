@@ -17,3 +17,16 @@
 .controls button:active{transform:translateY(2px);box-shadow:inset 0 2px 4px #0008}
 .controls .play{box-shadow:0 3px 10px #a78bfa55,inset 0 1px 1px #fff8}
 @media(prefers-reduced-motion:reduce){.cassette.playing .reel,.tape:after{animation:none!important}.controls button{transition:none}}
+
+/* Vintage hi-fi deck surround */
+.cassette-wrap{position:relative;isolation:isolate;padding:15px 17px;border-radius:15px}
+.cassette-wrap:before{content:"";position:absolute;inset:0;border-radius:15px;background:linear-gradient(135deg,#45434b,#17171d 24%,#292831 50%,#101015 76%,#39363e);border:1px solid #66616c;box-shadow:inset 0 1px 2px #ffffff30,inset 0 -3px 8px #000b,0 8px 20px #0008;z-index:-1}
+.cassette-wrap:after{content:"MOP  •  STEREO CASSETTE DECK     ▰ ▰ ▰";position:absolute;top:4px;left:25px;color:#b9b3c2;font:700 6px/1.2 system-ui,sans-serif;letter-spacing:1.5px;text-shadow:0 1px #000;pointer-events:none}
+.cassette{z-index:1}
+.controls{position:relative;z-index:1}
+.controls button:not(.play){background:linear-gradient(180deg,#55515b,#24222a);border-color:#77717c;color:#e7e2eb}
+.controls .play{background:linear-gradient(180deg,#c3aaff,#8f6ed2);border:1px solid #e0d2ff}
+.cassette.playing{animation:deckHum 2.8s ease-in-out infinite}
+.cassette.playing .tape{filter:drop-shadow(0 0 4px #f4d39a)}
+@keyframes deckHum{0%,100%{filter:drop-shadow(0 0 0 #0000)}50%{filter:drop-shadow(0 0 2px #d4c1ff44)}}
+@media(max-width:420px){.cassette-wrap{gap:12px;padding:15px 10px}.cassette-wrap:after{left:18px;font-size:5px}.cassette{width:min(245px,60vw)}.controls{gap:7px}.controls button{width:32px;height:32px}.controls .play{width:42px;height:42px}}
