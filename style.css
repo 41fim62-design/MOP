@@ -307,3 +307,7 @@
  .track-info{flex:1 1 calc(100% - 58px)}
  .track button{flex:0 0 30px;width:30px;height:30px}
 }
+
+
+/* Music catalog search and sorting */
+.catalog-tools{display:flex;align-items:center;gap:9px;margin:-8px 0 16px;color:var(--muted);font-size:12px}.track-sort{min-height:36px;max-width:220px;padding:7px 12px;border:1px solid #40384d;border-radius:20px;background:#17141f;color:#ddd5e9;font:600 12px system-ui;cursor:pointer}.track-sort:focus-visible{outline:2px solid var(--violet);outline-offset:2px}@media(max-width:420px){.catalog-tools{justify-content:space-between}.track-sort{flex:1}}
