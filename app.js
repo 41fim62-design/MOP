@@ -268,7 +268,7 @@ function blobToDataUrl(blob){
  });
 }
 function dataUrlToBlob(dataUrl){
- if(typeof dataUrl!=='string'||!/^data:audio\/[a-z0-9.+-]+;base64,/i.test(dataUrl))throw new Error('В резервной копии найден некорректный аудиофайл');
+ if(typeof dataUrl!=='string'||!/^data:(?:audio|image)\/[a-z0-9.+-]+;base64,/i.test(dataUrl))throw new Error('В резервной копии найден некорректный медиафайл');
  const parts=dataUrl.split(',');
  const mime=parts[0].slice(5).split(';')[0];
  const binary=atob(parts[1]);
