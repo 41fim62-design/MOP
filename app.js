@@ -480,7 +480,7 @@ function sync(){
 }
 searchInput?.addEventListener('input',render);
 document.getElementById('trackSort')?.addEventListener('change',render);
-document.getElementById('playVisibleTracks')?.addEventListener('click',()=>{const queue=playbackQueue();if(queue.length)load(queue[0],true);else alert('В этом разделе пока нет композиций.');});
+document.getElementById('playVisibleTracks')?.addEventListener('click',()=>{const queue=getPlaybackOrder();if(queue.length)load(queue[0],true);else alert('В этом разделе пока нет композиций.');});
 document.getElementById('shareArtistProfile')?.addEventListener('click',shareArtistProfile);
 document.getElementById('artistPhotoButton')?.addEventListener('click',chooseArtistPhoto);
 document.getElementById('removeArtistPhoto')?.addEventListener('click',()=>{if(!artistProfile.photo)return;delete artistProfile.photo;saveArtistProfile();});
@@ -570,7 +570,7 @@ async function refreshLibrary(){
  }else{current=-1;audio.removeAttribute('src');audio.load();sync()}
 }
 playBtn.onclick=()=>{
- if(current<0){const queue=playbackQueue();if(queue.length)load(queue[0],true);return}
+ if(current<0){const queue=getPlaybackOrder();if(queue.length)load(queue[0],true);return}
  if(audio.paused)audio.play().catch(()=>{});else audio.pause();
 };
 document.getElementById('next').onclick=()=>stepTrack(1);
