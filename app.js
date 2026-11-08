@@ -31,6 +31,8 @@ function renderArtistProfile(){
  const avatar=document.getElementById('artistAvatar');
  if(avatar){avatar.replaceChildren();const photo=sharedArtistProfile?null:artistProfile.photo;if(photo){const image=document.createElement('img');image.src=photo;image.alt='Фото исполнителя';avatar.appendChild(image)}else avatar.textContent=(profile.name||'M').trim().charAt(0).toUpperCase()||'M';avatar.style.setProperty('--artist-accent',sharedArtistProfile?.accent||artistProfile.accent||'#a78bfa');}
  const card=document.getElementById('artistCard');if(card)card.style.setProperty('--artist-accent',sharedArtistProfile?.accent||artistProfile.accent||'#a78bfa');
+ const preview=document.getElementById('artistPhotoPreview');if(preview){preview.replaceChildren();if(artistProfile.photo){const image=document.createElement('img');image.src=artistProfile.photo;image.alt='Предпросмотр фото профиля';preview.appendChild(image)}else preview.textContent='Фото не выбрано';}
+ const removePhoto=document.getElementById('removeArtistPhoto');if(removePhoto)removePhoto.hidden=!artistProfile.photo;
  const notice=document.getElementById('profileNotice');
  if(notice)notice.hidden=!sharedArtistProfile;
 }
@@ -46,7 +48,8 @@ async function chooseArtistPhoto(){
    const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(bitmap.width*scale));canvas.height=Math.max(1,Math.round(bitmap.height*scale));
    canvas.getContext('2d').drawImage(bitmap,0,0,canvas.width,canvas.height);bitmap.close();
    const photo=canvas.toDataURL('image/jpeg',.82);
-   artistProfile={...artistProfile,photo};saveArtistProfile();
+   artistProfile={...artistProfile,photo};
+   try{saveArtistProfile()}catch(storageError){delete artistProfile.photo;throw new Error('Не хватает места в хранилище браузера. Удали старые данные или уменьши фото.')}
    alert('Фото профиля сохранено на этом устройстве. Для общей публикации потребуется серверное хранилище.');
   }catch(error){alert(error.message||'Не удалось сохранить фото.')}
  };
@@ -439,6 +442,7 @@ searchInput?.addEventListener('input',render);
 document.getElementById('trackSort')?.addEventListener('change',render);
 document.getElementById('shareArtistProfile')?.addEventListener('click',shareArtistProfile);
 document.getElementById('artistPhotoButton')?.addEventListener('click',chooseArtistPhoto);
+document.getElementById('removeArtistPhoto')?.addEventListener('click',()=>{if(!artistProfile.photo)return;delete artistProfile.photo;saveArtistProfile();});
 document.getElementById('saveArtistProfile')?.addEventListener('click',()=>{const name=document.getElementById('artistNameInput').value.trim();const bio=document.getElementById('artistBioInput').value.trim();const accent=document.getElementById('artistAccentInput').value;if(!name){alert('Укажи имя исполнителя.');return}artistProfile={...artistProfile,name,bio,accent};saveArtistProfile();document.getElementById('artistEditor').hidden=true;});
 document.getElementById('editArtistProfile')?.addEventListener('click',()=>{if(sharedArtistProfile)return;document.getElementById('artistNameInput').value=artistProfile.name||'';document.getElementById('artistBioInput').value=artistProfile.bio||'';document.getElementById('artistAccentInput').value=artistProfile.accent||'#a78bfa';document.getElementById('artistEditor').hidden=false;document.getElementById('artistNameInput').focus();});
 document.getElementById('cancelArtistEdit')?.addEventListener('click',()=>{document.getElementById('artistEditor').hidden=true;});
