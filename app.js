@@ -120,7 +120,7 @@ function sync(){
  cassette.classList.toggle('playing',active);playBtn.textContent=active?'Ⅱ':'▶';
 }
 searchInput?.addEventListener('input',render);
-document.getElementById('saveArtistProfile')?.addEventListener('click',()=>{const name=document.getElementById('artistNameInput').value.trim();const bio=document.getElementById('artistBioInput').value.trim();if(!name){alert('Укажи имя исполнителя.');return}artistProfile={name,bio};saveArtistProfile();});
+document.getElementById('saveArtistProfile')?.addEventListener('click',()=>{const name=document.getElementById('artistNameInput').value.trim();const bio=document.getElementById('artistBioInput').value.trim();if(!name){alert('Укажи имя исполнителя.');return}artistProfile={name,bio};saveArtistProfile();document.getElementById('artistEditor').hidden=true;});
 document.getElementById('editArtistProfile')?.addEventListener('click',()=>{document.getElementById('artistNameInput').value=artistProfile.name||'';document.getElementById('artistBioInput').value=artistProfile.bio||'';document.getElementById('artistEditor').hidden=false;document.getElementById('artistNameInput').focus();});
 document.getElementById('cancelArtistEdit')?.addEventListener('click',()=>{document.getElementById('artistEditor').hidden=true;});
 document.getElementById('createPlaylist')?.addEventListener('click',createPlaylist);
@@ -148,6 +148,7 @@ async function refreshLibrary(){
  const saved=await readTracks();
  tracks.forEach(t=>URL.revokeObjectURL(t.url));
  tracks=saved.map(t=>({...t,url:URL.createObjectURL(t.blob)}));
+ renderArtistProfile();
  const previous=current;
  current=-1;render();
  if(tracks.length){load(previous>=0&&previous<tracks.length?previous:0,false)}
