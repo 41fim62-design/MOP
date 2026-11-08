@@ -45,3 +45,5 @@ Open the GitHub Pages site over HTTPS in a modern browser. On supported browsers
 - A private listening activity feed shows up to eight recently played local tracks and lets the listener replay them. This activity is stored only on the current device.
 
 - Artist profiles support external VK, Telegram, and Yandex Music links. Valid HTTPS links appear on the local profile and are included in shareable profile URLs and JSON backups. Shared cards never expose local audio files.
+
+- Shared artist cards include a follow/unfollow action. Followed shared profiles are saved locally, listed in My subscriptions, and can be reopened or unfollowed. This is device-local; cross-device synchronized subscriptions require a shared backend.
