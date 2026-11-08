@@ -311,3 +311,11 @@
 
 /* Music catalog search and sorting */
 .catalog-tools{display:flex;align-items:center;gap:9px;margin:-8px 0 16px;color:var(--muted);font-size:12px}.track-sort{min-height:36px;max-width:220px;padding:7px 12px;border:1px solid #40384d;border-radius:20px;background:#17141f;color:#ddd5e9;font:600 12px system-ui;cursor:pointer}.track-sort:focus-visible{outline:2px solid var(--violet);outline-offset:2px}@media(max-width:420px){.catalog-tools{justify-content:space-between}.track-sort{flex:1}}
+
+
+/* Local library overview */
+.library-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:0 0 18px}
+.library-stat{min-width:0;padding:13px 14px;border:1px solid #302a3b;border-radius:12px;background:linear-gradient(145deg,#191620,#111016)}
+.library-stat span{display:block;margin-bottom:7px;color:var(--muted);font-size:9px;font-weight:700;letter-spacing:1.1px}
+.library-stat b{display:block;overflow:hidden;color:#eee8f7;font-size:20px;font-weight:700;text-overflow:ellipsis;white-space:nowrap}
+@media(max-width:560px){.library-stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.library-stat{padding:11px 12px}.library-stat b{font-size:18px}}
