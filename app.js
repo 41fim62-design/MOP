@@ -80,14 +80,25 @@ function trackWord(n){
 }
 function render(){
  const selected=playlists.find(p=>p.id===activePlaylistId);
- document.getElementById('trackCount').textContent=tracks.length+' '+trackWord(tracks.length)+(selected?' · в «'+selected.name+'»: '+selected.trackIds.length:'');
+ const countEl=document.getElementById('trackCount');
+ if(countEl)countEl.textContent=tracks.length+' '+trackWord(tracks.length)+(selected?' · в «'+selected.name+'»: '+selected.trackIds.length:'');
  if(!tracks.length){setLibraryEmpty('Здесь появятся твои треки. Нажми «Загрузить музыку», чтобы добавить аудио с устройства.');return}
  tracksEl.innerHTML='';
  const query=(searchInput?.value||'').trim().toLocaleLowerCase('ru');
  const activePlaylist=playlists.find(p=>p.id===activePlaylistId);
- const visible=tracks.map((track,index)=>({track,index})).filter(({track})=>track.name.toLocaleLowerCase('ru').includes(query)&&(!showFavorites||track.favorite)&&(!activePlaylist||activePlaylist.trackIds.includes(track.id)));
+ const visible=tracks.map((track,index)=>({track,index})).filter(({track})=>{
+  const searchable=[track.name,track.artist].filter(Boolean).join(' ').toLocaleLowerCase('ru');
+  return searchable.includes(query)&&(!showFavorites||track.favorite)&&(!activePlaylist||activePlaylist.trackIds.includes(track.id));
+ });
+ const sort=document.getElementById('trackSort')?.value||'newest';
+ visible.sort((a,b)=>{
+  if(sort==='title')return (a.track.name||'').localeCompare(b.track.name||'','ru',{sensitivity:'base'});
+  if(sort==='artist')return (a.track.artist||'').localeCompare(b.track.artist||'','ru',{sensitivity:'base'})||(a.track.name||'').localeCompare(b.track.name||'','ru',{sensitivity:'base'});
+  return (Number(b.track.id)||b.index)-(Number(a.track.id)||a.index);
+ });
+ if(countEl&&query)countEl.textContent+=' · найдено: '+visible.length;
  if(!visible.length){
-  setLibraryEmpty(showFavorites?'В избранном пока пусто. Нажми ☆ у любого трека.':query?'Ничего не найдено. Попробуй другое название.':activePlaylist?'В плейлисте «'+activePlaylist.name+'» пока нет треков. Добавь композиции кнопкой ＋.':'В библиотеке пока нет треков.');
+  setLibraryEmpty(showFavorites?'В избранном пока пусто. Нажми ☆ у любого трека.':query?'Ничего не найдено. Проверь название или имя исполнителя.':activePlaylist?'В плейлисте «'+activePlaylist.name+'» пока нет треков. Добавь композиции кнопкой ＋.':'В библиотеке пока нет треков.');
   return;
  }
  visible.forEach(({track:t,index:i})=>{
@@ -294,7 +305,7 @@ function sync(){
  }
  cassette.classList.toggle('playing',active);cassette.style.setProperty('--tape-progress',(progress*100).toFixed(1)+'%');cassette.style.setProperty('--left-reel-speed',(1.15-progress*.43).toFixed(2)+'s');cassette.style.setProperty('--right-reel-speed',(.72+progress*.43).toFixed(2)+'s');playBtn.textContent=active?'Ⅱ':'▶';playBtn.setAttribute('aria-label',active?'Пауза':'Воспроизвести');playBtn.setAttribute('aria-pressed',String(active));
 }
-searchInput?.addEventListener('input',render);
+searchInput?.addEventListener('input',render);\ndocument.getElementById('trackSort')?.addEventListener('change',render);
 document.getElementById('shareArtistProfile')?.addEventListener('click',shareArtistProfile);
 document.getElementById('saveArtistProfile')?.addEventListener('click',()=>{const name=document.getElementById('artistNameInput').value.trim();const bio=document.getElementById('artistBioInput').value.trim();if(!name){alert('Укажи имя исполнителя.');return}artistProfile={name,bio};saveArtistProfile();document.getElementById('artistEditor').hidden=true;});
 document.getElementById('editArtistProfile')?.addEventListener('click',()=>{if(sharedArtistProfile)return;document.getElementById('artistNameInput').value=artistProfile.name||'';document.getElementById('artistBioInput').value=artistProfile.bio||'';document.getElementById('artistEditor').hidden=false;document.getElementById('artistNameInput').focus();});
