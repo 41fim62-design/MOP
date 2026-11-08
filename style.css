@@ -30,3 +30,34 @@
 .cassette.playing .tape{filter:drop-shadow(0 0 4px #f4d39a)}
 @keyframes deckHum{0%,100%{filter:drop-shadow(0 0 0 #0000)}50%{filter:drop-shadow(0 0 2px #d4c1ff44)}}
 @media(max-width:420px){.cassette-wrap{gap:12px;padding:15px 10px}.cassette-wrap:after{left:18px;font-size:5px}.cassette{width:min(245px,60vw)}.controls{gap:7px}.controls button{width:32px;height:32px}.controls .play{width:42px;height:42px}}
+
+
+/* Visible moving tape and changing tape packs on both reels */
+.tape{
+  height:10px;
+  left:16%;
+  right:16%;
+  border-radius:2px;
+  background:linear-gradient(180deg,#fff0c9 0 1px,#d69b60 1px 3px,#60391f 3px 7px,#dba66d 7px 9px,#fff0c9 9px 10px);
+  box-shadow:0 0 0 1px #24170f,0 0 7px #e8bb7a99;
+}
+.tape:before{
+  inset:1px 0;
+  background:linear-gradient(180deg,#8a552f 0%,#e4b879 34%,#754322 74%,#f4d39b 100%);
+  opacity:.95;
+}
+.tape:after{
+  inset:0;
+  background:repeating-linear-gradient(90deg,transparent 0 4px,rgba(255,244,206,.95) 5px 6px,transparent 7px 12px);
+  background-size:26px 100%;
+  animation:tapeMove .22s linear infinite;
+  opacity:.95;
+}
+@keyframes tapeMove{to{background-position:26px 0}}
+.reel:before{
+  inset:3px;
+  background:repeating-radial-gradient(circle,#d4c9b6 0 1px,#6b5b4d 2px 3px,#b28a5e 4px 5px);
+  box-shadow:inset 0 0 0 2px #e2d3bb,0 0 0 1px #342a27;
+  transform:scale(var(--coil,.75));
+}
+.reel i{z-index:3}
