@@ -1,4 +1,4 @@
-const CACHE='mop-shell-v64';
+const CACHE='mop-shell-v65';
 const FILES=['./','./index.html','./style.css','./app.js','./manifest.json','./icon.svg'];
 
 self.addEventListener('install',event=>{
