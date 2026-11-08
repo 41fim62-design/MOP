@@ -228,3 +228,10 @@
 .track-delete{font-size:22px;line-height:1;color:#aaa5b2;background:transparent;border-color:transparent}
 .track-delete:hover{color:#ff8eaa;background:#38202a;border-color:#694052}
 .track-play:hover{background:#382d4b;border-color:var(--violet)}
+
+/* Local library search */
+.search-box{display:flex;align-items:center;gap:10px;max-width:760px;margin:8px 0 18px;padding:0 15px;height:46px;border:1px solid #34303e;border-radius:12px;background:#111018;color:var(--muted)}
+.search-box:focus-within{border-color:var(--violet);box-shadow:0 0 0 3px #a78bfa1c}
+.search-box>span{font-size:23px;line-height:1}
+.search-box input{width:100%;min-width:0;border:0;outline:0;background:transparent;color:var(--white);font:inherit;font-size:14px}
+.search-box input::placeholder{color:#777482}
