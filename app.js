@@ -31,18 +31,7 @@ function readSharedArtistProfile(){
  if(!name)return null;
  return {name:name.slice(0,50),bio:(bio||'').slice(0,180),accent:/^#[0-9a-f]{6}$/i.test(accent||'')?accent:'#a78bfa',links:getArtistLinks({links:{vk:params.get('vk'),telegram:params.get('telegram'),yandex:params.get('yandex')}})};
 }
-function saveArtistProfile(){localStorage.setItem('mop-artist-profile',JSON.stringify(artistProfile));
-  const social=backup.social&&typeof backup.social==='object'?backup.social:{};
-  const safeFollowed=Array.isArray(social.followedArtists)?[...new Set(social.followedArtists.filter(x=>typeof x==='string').map(x=>x.slice(0,100)))].slice(0,500):[];
-  const safeSubscriptions=Array.isArray(social.artistSubscriptions)?social.artistSubscriptions.filter(item=>item&&typeof item.key==='string'&&typeof item.name==='string'&&typeof item.url==='string'&&/^https:\/\//i.test(item.url)).slice(0,300).map(item=>({key:item.key.slice(0,400),name:item.name.slice(0,50),bio:String(item.bio||'').slice(0,180),accent:/^#[0-9a-f]{6}$/i.test(item.accent||'')?item.accent:'#a78bfa',links:getArtistLinks(item),url:item.url.slice(0,2000),addedAt:String(item.addedAt||'').slice(0,40)})):[];
-  const safePosts=Array.isArray(social.artistPosts)?social.artistPosts.filter(item=>item&&typeof item.id==='string'&&typeof item.text==='string').slice(0,30).map(item=>({id:item.id.slice(0,80),text:item.text.slice(0,500),createdAt:String(item.createdAt||'').slice(0,40),track:String(item.track||'').slice(0,180),album:String(item.album||'').slice(0,120)})):[];
-  const safeInbox=Array.isArray(social.artistInbox)?social.artistInbox.filter(item=>item&&typeof item.id==='string'&&typeof item.text==='string').slice(0,100).map(item=>({id:item.id.slice(0,80),text:item.text.slice(0,500),artist:String(item.artist||'Слушатель').slice(0,50),createdAt:String(item.createdAt||'').slice(0,40),postText:String(item.postText||'').slice(0,500),savedAt:String(item.savedAt||'').slice(0,40)})):[];
-  localStorage.setItem('mop-followed-artists',JSON.stringify(safeFollowed));
-  localStorage.setItem('mop-artist-subscriptions',JSON.stringify(safeSubscriptions));
-  localStorage.setItem('mop-artist-posts',JSON.stringify(safePosts));
-  localStorage.setItem('mop-artist-inbox',JSON.stringify(safeInbox));
-  followedArtists=safeFollowed;
-renderArtistProfile();}
+function saveArtistProfile(){localStorage.setItem('mop-artist-profile',JSON.stringify(artistProfile));renderArtistProfile();}
 function cleanExternalLink(value){const raw=String(value||'').trim();if(!raw)return '';try{const url=new URL(raw);return url.protocol==='https:'?url.href.slice(0,300):''}catch(error){return ''}}
 function getArtistLinks(source){const links=source?.links&&typeof source.links==='object'?source.links:{};return {vk:cleanExternalLink(links.vk),telegram:cleanExternalLink(links.telegram),yandex:cleanExternalLink(links.yandex)}}
 function loadArtistSubscriptions(){try{const value=JSON.parse(localStorage.getItem('mop-artist-subscriptions')||'[]');return Array.isArray(value)?value.filter(item=>item&&typeof item.key==='string'&&typeof item.name==='string'&&typeof item.url==='string').slice(0,300):[]}catch(error){return []}}
@@ -644,6 +633,17 @@ async function importBackup(file){
   });
   artistProfile={name:String(backup.artistProfile.name||'Мой проект').slice(0,50),bio:String(backup.artistProfile.bio||'').slice(0,180),accent:/^#[0-9a-f]{6}$/i.test(backup.artistProfile.accent||'')?backup.artistProfile.accent:'#a78bfa',links:getArtistLinks(backup.artistProfile),...(typeof backup.artistProfile.photo==='string'&&backup.artistProfile.photo.startsWith('data:image/')?{photo:backup.artistProfile.photo}:{})};
   localStorage.setItem('mop-artist-profile',JSON.stringify(artistProfile));
+  const social=backup.social&&typeof backup.social==='object'?backup.social:{};
+  const safeFollowed=Array.isArray(social.followedArtists)?[...new Set(social.followedArtists.filter(x=>typeof x==='string').map(x=>x.slice(0,100)))].slice(0,500):[];
+  const safeSubscriptions=Array.isArray(social.artistSubscriptions)?social.artistSubscriptions.filter(item=>item&&typeof item.key==='string'&&typeof item.name==='string'&&typeof item.url==='string'&&/^https:\/\//i.test(item.url)).slice(0,300).map(item=>({key:item.key.slice(0,400),name:item.name.slice(0,50),bio:String(item.bio||'').slice(0,180),accent:/^#[0-9a-f]{6}$/i.test(item.accent||'')?item.accent:'#a78bfa',links:getArtistLinks(item),url:item.url.slice(0,2000),addedAt:String(item.addedAt||'').slice(0,40)})):[];
+  const safePosts=Array.isArray(social.artistPosts)?social.artistPosts.filter(item=>item&&typeof item.id==='string'&&typeof item.text==='string').slice(0,30).map(item=>({id:item.id.slice(0,80),text:item.text.slice(0,500),createdAt:String(item.createdAt||'').slice(0,40),track:String(item.track||'').slice(0,180),album:String(item.album||'').slice(0,120)})):[];
+  const safeInbox=Array.isArray(social.artistInbox)?social.artistInbox.filter(item=>item&&typeof item.id==='string'&&typeof item.text==='string').slice(0,100).map(item=>({id:item.id.slice(0,80),text:item.text.slice(0,500),artist:String(item.artist||'Слушатель').slice(0,50),createdAt:String(item.createdAt||'').slice(0,40),postText:String(item.postText||'').slice(0,500),savedAt:String(item.savedAt||'').slice(0,40)})):[];
+  localStorage.setItem('mop-followed-artists',JSON.stringify(safeFollowed));
+  localStorage.setItem('mop-artist-subscriptions',JSON.stringify(safeSubscriptions));
+  localStorage.setItem('mop-artist-posts',JSON.stringify(safePosts));
+  localStorage.setItem('mop-artist-inbox',JSON.stringify(safeInbox));
+  followedArtists=safeFollowed;
+
   playlists=cleanPlaylists;savePlaylists();activePlaylistId='';
   audio.pause();audio.removeAttribute('src');audio.load();current=-1;
   renderPlaylistOptions();await refreshLibrary();
