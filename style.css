@@ -374,3 +374,9 @@
 .drop-overlay b{font-size:clamp(20px,5vw,34px);color:#f0e8ff}
 .drop-overlay span{font-size:13px;color:#bcb0d0}
 body.file-dragging{outline:3px solid #a78bfa;outline-offset:-7px}
+
+/* Playback shuffle and repeat controls */
+.playback-options{display:flex;align-items:center;justify-content:center;gap:12px;margin:8px auto 2px;color:#8d8795;font-size:9px;letter-spacing:1.5px}
+.playback-options button{width:34px;height:30px;border:1px solid #39333e;border-radius:9px;background:#17141b;color:#aaa2b2;font:600 16px system-ui;cursor:pointer}
+.playback-options button.active{border-color:#8e70bd;background:#2a2038;color:#e3d3ff}
+.playback-options button:focus-visible{outline:2px solid #a78bfa;outline-offset:3px}
