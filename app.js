@@ -6,7 +6,7 @@ const cassette=document.getElementById('cassette');
 const seek=document.getElementById('seek');
 const searchInput=document.getElementById('trackSearch');
 const durationEl=document.getElementById('duration'),elapsedEl=document.getElementById('elapsed');
-let tracks=[],current=-1,db=null,showFavorites=false,playlists=loadPlaylists(),activePlaylistId='',artistProfile=loadArtistProfile(),sharedArtistProfile=readSharedArtistProfile();
+let tracks=[],current=-1,db=null,showFavorites=false,showRecent=false,playlists=loadPlaylists(),activePlaylistId='',artistProfile=loadArtistProfile(),sharedArtistProfile=readSharedArtistProfile();
 const selectedTrackIds=new Set();
 let shuffleEnabled=false,repeatMode='off',shuffleOrder=[],shuffleSignature='',playbackSpeed=1;
 try{const playbackPrefs=JSON.parse(localStorage.getItem('mop-playback-options')||'{}');shuffleEnabled=!!playbackPrefs.shuffle;repeatMode=['off','all','one'].includes(playbackPrefs.repeat)?playbackPrefs.repeat:'off';playbackSpeed=[.75,1,1.25,1.5,2].includes(Number(playbackPrefs.speed))?Number(playbackPrefs.speed):1}catch(error){}
@@ -91,10 +91,11 @@ function refreshArtistFilter(){
 function getVisibleTrackEntries(){
  const query=(searchInput?.value||'').trim().toLocaleLowerCase('ru');
  const playlist=playlists.find(p=>p.id===activePlaylistId);
+ const recentTrackIds=new Set(tracks.slice().sort((a,b)=>(Number(b.id)||0)-(Number(a.id)||0)).slice(0,10).map(t=>t.id));
  const visible=tracks.map((track,index)=>({track,index})).filter(({track})=>{
   const searchable=[track.name,track.artist].filter(Boolean).join(' ').toLocaleLowerCase('ru');
   const artistFilter=document.getElementById('artistFilter')?.value||'';
-  return searchable.includes(query)&&(!artistFilter||(track.artist||'').trim()===artistFilter)&&(!showFavorites||track.favorite)&&(!playlist||playlist.trackIds.includes(track.id));
+  return searchable.includes(query)&&(!artistFilter||(track.artist||'').trim()===artistFilter)&&(!showFavorites||track.favorite)&&(!showRecent||recentTrackIds.has(track.id))&&(!playlist||playlist.trackIds.includes(track.id));
  });
  const sort=document.getElementById('trackSort')?.value||'newest';
  visible.sort((a,b)=>{
@@ -193,6 +194,7 @@ function render(){
  const activePlaylist=playlists.find(p=>p.id===activePlaylistId);
  const visible=getVisibleTrackEntries();
  if(countEl&&query)countEl.textContent+=' · найдено: '+visible.length;
+ if(countEl&&showRecent)countEl.textContent+=' · последние 10 добавленных';
  updateBulkTools(visible.map(item=>item.track.id));
  if(!visible.length){
   setLibraryEmpty(showFavorites?'В избранном пока пусто. Нажми ☆ у любого трека.':query?'Ничего не найдено. Проверь название или имя исполнителя.':activePlaylist?'В плейлисте «'+activePlaylist.name+'» пока нет треков. Добавь композиции кнопкой ＋.':'В библиотеке пока нет треков.');
@@ -493,6 +495,7 @@ function sync(){
 searchInput?.addEventListener('input',render);
 document.getElementById('trackSort')?.addEventListener('change',render);
 document.getElementById('artistFilter')?.addEventListener('change',render);
+document.getElementById('recentTracksFilter')?.addEventListener('click',()=>{showRecent=!showRecent;const button=document.getElementById('recentTracksFilter');button?.classList.toggle('active',showRecent);button?.setAttribute('aria-pressed',String(showRecent));render()});
 document.getElementById('playVisibleTracks')?.addEventListener('click',()=>{const queue=getPlaybackOrder();if(queue.length)load(queue[0],true);else alert('В этом разделе пока нет композиций.');});
 document.getElementById('shareArtistProfile')?.addEventListener('click',shareArtistProfile);
 document.getElementById('artistPhotoButton')?.addEventListener('click',chooseArtistPhoto);
