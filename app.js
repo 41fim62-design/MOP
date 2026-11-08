@@ -114,14 +114,14 @@ function sync(){
  const progress=audio.duration?Math.min(1,Math.max(0,audio.currentTime/audio.duration)):0;
  const leftPack=cassette.querySelector('.left-pack'),rightPack=cassette.querySelector('.right-pack');
  if(leftPack&&rightPack){
-  const coreRadius=9,leftOuter=19-progress*10,rightOuter=9+progress*10;
+  const coreRadius=8.5,leftOuter=19-progress*8.5,rightOuter=10.5+progress*8.5;
   [[leftPack,leftOuter],[rightPack,rightOuter]].forEach(([pack,outer])=>{
    const thickness=Math.max(0,outer-coreRadius);
    pack.setAttribute('r',((coreRadius+outer)/2).toFixed(2));
    pack.setAttribute('stroke-width',thickness.toFixed(2));
   });
  }
- cassette.classList.toggle('playing',active);cassette.style.setProperty('--tape-progress',(progress*100).toFixed(1)+'%');playBtn.textContent=active?'Ⅱ':'▶';
+ cassette.classList.toggle('playing',active);cassette.style.setProperty('--tape-progress',(progress*100).toFixed(1)+'%');cassette.style.setProperty('--left-reel-speed',(1.15-progress*.43).toFixed(2)+'s');cassette.style.setProperty('--right-reel-speed',(.72+progress*.43).toFixed(2)+'s');playBtn.textContent=active?'Ⅱ':'▶';
 }
 searchInput?.addEventListener('input',render);
 document.getElementById('saveArtistProfile')?.addEventListener('click',()=>{const name=document.getElementById('artistNameInput').value.trim();const bio=document.getElementById('artistBioInput').value.trim();if(!name){alert('Укажи имя исполнителя.');return}artistProfile={name,bio};saveArtistProfile();document.getElementById('artistEditor').hidden=true;});
