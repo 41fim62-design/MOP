@@ -6,10 +6,42 @@ const cassette=document.getElementById('cassette');
 const seek=document.getElementById('seek');
 const searchInput=document.getElementById('trackSearch');
 const durationEl=document.getElementById('duration'),elapsedEl=document.getElementById('elapsed');
-let tracks=[],current=-1,db=null,showFavorites=false,playlists=loadPlaylists(),activePlaylistId='',artistProfile=loadArtistProfile();
+let tracks=[],current=-1,db=null,showFavorites=false,playlists=loadPlaylists(),activePlaylistId='',artistProfile=loadArtistProfile(),sharedArtistProfile=readSharedArtistProfile();
 function loadArtistProfile(){try{return JSON.parse(localStorage.getItem('mop-artist-profile'))||{name:'Мой проект',bio:'Независимый исполнитель на MOP'}}catch(e){return {name:'Мой проект',bio:'Независимый исполнитель на MOP'}}}
+function readSharedArtistProfile(){
+ const params=new URLSearchParams(location.search);
+ const name=params.get('artist'),bio=params.get('bio');
+ if(!name)return null;
+ return {name:name.slice(0,50),bio:(bio||'').slice(0,180)};
+}
 function saveArtistProfile(){localStorage.setItem('mop-artist-profile',JSON.stringify(artistProfile));renderArtistProfile();}
-function renderArtistProfile(){const name=document.getElementById('artistName'),bio=document.getElementById('artistBio');if(name)name.textContent=artistProfile.name||'Мой проект';if(bio)bio.textContent=artistProfile.bio||'Добавь короткое описание своего звучания.';const count=document.getElementById('artistTrackCount');if(count)count.textContent=tracks.length+' '+trackWord(tracks.length);}
+function renderArtistProfile(){
+ const profile=sharedArtistProfile||artistProfile;
+ const name=document.getElementById('artistName'),bio=document.getElementById('artistBio');
+ if(name)name.textContent=profile.name||'Мой проект';
+ if(bio)bio.textContent=profile.bio||'Независимый исполнитель на MOP';
+ const count=document.getElementById('artistTrackCount');
+ if(count)count.textContent=sharedArtistProfile?'Карточка исполнителя · аудио не опубликовано':tracks.length+' '+trackWord(tracks.length);
+ const edit=document.getElementById('editArtistProfile'),share=document.getElementById('shareArtistProfile');
+ if(edit)edit.hidden=!!sharedArtistProfile;
+ if(share)share.hidden=!!sharedArtistProfile;
+ const kicker=document.querySelector('.artist-kicker');
+ if(kicker)kicker.textContent=sharedArtistProfile?'КАРТОЧКА ИСПОЛНИТЕЛЯ ПО ССЫЛКЕ':'ПРОФИЛЬ ИСПОЛНИТЕЛЯ';
+ const notice=document.getElementById('profileNotice');
+ if(notice)notice.hidden=!sharedArtistProfile;
+}
+async function shareArtistProfile(){
+ const params=new URLSearchParams({artist:artistProfile.name||'Мой проект',bio:artistProfile.bio||''});
+ const url=location.origin+location.pathname+'?'+params.toString();
+ const shareData={title:'MOP · '+(artistProfile.name||'Исполнитель'),text:'Карточка исполнителя на MOP',url};
+ try{
+  if(navigator.share){await navigator.share(shareData);return}
+  if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(url);alert('Ссылка на карточку скопирована. Отправь её друзьям.');return}
+  const field=document.createElement('textarea');field.value=url;field.style.position='fixed';field.style.opacity='0';document.body.appendChild(field);field.select();
+  const copied=document.execCommand('copy');field.remove();
+  alert(copied?'Ссылка на карточку скопирована.':'Не удалось скопировать ссылку. Открой MOP через HTTPS и попробуй ещё раз.');
+ }catch(error){if(error.name!=='AbortError')alert('Не удалось поделиться карточкой. Попробуй ещё раз.')}
+}
 function loadPlaylists(){try{const value=JSON.parse(localStorage.getItem('mop-playlists')||'[]');return Array.isArray(value)?value.filter(p=>p&&typeof p.id==='string'&&typeof p.name==='string'&&Array.isArray(p.trackIds)).map(p=>({...p,trackIds:[...new Set(p.trackIds.filter(id=>Number.isFinite(id)))]})):[]}catch(e){return []}}
 function savePlaylists(){localStorage.setItem('mop-playlists',JSON.stringify(playlists))}
 function renderPlaylistOptions(){const select=document.getElementById('playlistSelect');if(!select)return;select.replaceChildren(new Option('Все треки',''));playlists.forEach(p=>select.add(new Option(p.name,p.id)));select.value=activePlaylistId;const remove=document.getElementById('deletePlaylist');if(remove)remove.disabled=!activePlaylistId;}
@@ -142,8 +174,9 @@ function sync(){
  cassette.classList.toggle('playing',active);cassette.style.setProperty('--tape-progress',(progress*100).toFixed(1)+'%');cassette.style.setProperty('--left-reel-speed',(1.15-progress*.43).toFixed(2)+'s');cassette.style.setProperty('--right-reel-speed',(.72+progress*.43).toFixed(2)+'s');playBtn.textContent=active?'Ⅱ':'▶';playBtn.setAttribute('aria-label',active?'Пауза':'Воспроизвести');playBtn.setAttribute('aria-pressed',String(active));
 }
 searchInput?.addEventListener('input',render);
+document.getElementById('shareArtistProfile')?.addEventListener('click',shareArtistProfile);
 document.getElementById('saveArtistProfile')?.addEventListener('click',()=>{const name=document.getElementById('artistNameInput').value.trim();const bio=document.getElementById('artistBioInput').value.trim();if(!name){alert('Укажи имя исполнителя.');return}artistProfile={name,bio};saveArtistProfile();document.getElementById('artistEditor').hidden=true;});
-document.getElementById('editArtistProfile')?.addEventListener('click',()=>{document.getElementById('artistNameInput').value=artistProfile.name||'';document.getElementById('artistBioInput').value=artistProfile.bio||'';document.getElementById('artistEditor').hidden=false;document.getElementById('artistNameInput').focus();});
+document.getElementById('editArtistProfile')?.addEventListener('click',()=>{if(sharedArtistProfile)return;document.getElementById('artistNameInput').value=artistProfile.name||'';document.getElementById('artistBioInput').value=artistProfile.bio||'';document.getElementById('artistEditor').hidden=false;document.getElementById('artistNameInput').focus();});
 document.getElementById('cancelArtistEdit')?.addEventListener('click',()=>{document.getElementById('artistEditor').hidden=true;});
 document.getElementById('createPlaylist')?.addEventListener('click',createPlaylist);
 document.getElementById('deletePlaylist')?.addEventListener('click',deletePlaylist);
