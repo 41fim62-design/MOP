@@ -273,3 +273,9 @@
 .cassette.playing .left-spool{animation-duration:var(--left-reel-speed,1.15s)}
 .cassette.playing .right-spool{animation-duration:var(--right-reel-speed,.72s)}
 .left-pack,.right-pack{stroke-linecap:butt}
+
+/* Install app action */
+.install-app{border:1px solid #514276;color:#e8ddff;background:#211a31;padding:10px 14px;border-radius:22px;font:700 12px system-ui;cursor:pointer;white-space:nowrap}
+.install-app:hover{border-color:var(--violet);background:#302344}
+.install-app[hidden]{display:none}
+@media(max-width:420px){.top{padding:0 4vw;gap:8px}.brand{font-size:24px}.tag{font-size:7px;letter-spacing:2px}.upload{padding:10px 11px;font-size:11px}.install-app{padding:9px 10px;font-size:11px}}
