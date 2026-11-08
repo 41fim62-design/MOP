@@ -43,3 +43,5 @@ Open the GitHub Pages site over HTTPS in a modern browser. On supported browsers
 - Album detail pages show the album artwork, artists, track count, and playable track list, with one-tap album playback.
 
 - A private listening activity feed shows up to eight recently played local tracks and lets the listener replay them. This activity is stored only on the current device.
+
+- Artist profiles support external VK, Telegram, and Yandex Music links. Valid HTTPS links appear on the local profile and are included in shareable profile URLs and JSON backups. Shared cards never expose local audio files.
