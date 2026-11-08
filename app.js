@@ -112,6 +112,15 @@ function getVisibleTrackEntries(){
  return visible;
 }
 function playbackQueue(){return getVisibleTrackEntries().map(item=>item.index);}
+function renderQueue(){
+ const panel=document.getElementById('queuePanel'),list=document.getElementById('queueList'),count=document.getElementById('queueCount');
+ if(!panel||!list)return;
+ const order=getPlaybackOrder(),position=order.indexOf(current),upcoming=order.slice(position>=0?position+1:0);
+ if(count)count.textContent=String(upcoming.length);
+ list.replaceChildren();
+ if(!upcoming.length){const empty=document.createElement('p');empty.className='queue-empty';empty.textContent='Следующих композиций пока нет. Очередь строится по текущему каталогу и фильтрам.';list.appendChild(empty);return}
+ upcoming.forEach((index,n)=>{const track=tracks[index];if(!track)return;const row=document.createElement('button');row.type='button';row.className='queue-item';row.setAttribute('aria-label','Воспроизвести '+track.name);const number=document.createElement('span');number.className='queue-number';number.textContent=String(n+1).padStart(2,'0');const title=document.createElement('span');title.className='queue-title';title.textContent=track.name;const artist=document.createElement('span');artist.className='queue-artist';artist.textContent=track.artist||artistProfile.name||'Мой проект';row.append(number,title,artist);row.addEventListener('click',()=>load(index,true));list.appendChild(row)});
+}
 function getPlaybackOrder(){
  const queue=playbackQueue(),signature=queue.join(',');
  if(!shuffleEnabled)return queue;
@@ -187,6 +196,7 @@ function updateLibraryStats(){
  });
 }
 function render(){
+ renderQueue();
  refreshArtistFilter();
  updateLibraryStats();
  const selected=playlists.find(p=>p.id===activePlaylistId);
@@ -477,7 +487,7 @@ function savePlaybackState(){
 }
 function load(i,autoplay){
  if(i<0||i>=tracks.length)return;
- current=i;rememberPlayedTrack(tracks[i].id);savePlaybackState();audio.pause();audio.src=tracks[i].url;seek.value=0;elapsedEl.textContent='0:00';durationEl.textContent='0:00';
+ current=i;rememberPlayedTrack(tracks[i].id);savePlaybackState();renderQueue();audio.pause();audio.src=tracks[i].url;seek.value=0;elapsedEl.textContent='0:00';durationEl.textContent='0:00';
  const playerCover=document.querySelector('.player .cover');
  if(playerCover){playerCover.replaceChildren();if(tracks[i].coverUrl){const image=document.createElement('img');image.src=tracks[i].coverUrl;image.alt='Обложка '+tracks[i].name;playerCover.appendChild(image)}else playerCover.textContent='M'}
  document.getElementById('currentTitle').textContent=tracks[i].name;
@@ -678,3 +688,5 @@ window.addEventListener('appinstalled',()=>{
  if(installButton)installButton.hidden=true;
 });
 if(navigator.storage?.persist)navigator.storage.persist().catch(()=>{});
+
+document.getElementById('queueToggle')?.addEventListener('click',()=>{const panel=document.getElementById('queuePanel'),button=document.getElementById('queueToggle');if(!panel||!button)return;panel.hidden=!panel.hidden;button.setAttribute('aria-expanded',String(!panel.hidden));renderQueue()});
