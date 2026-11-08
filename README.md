@@ -39,3 +39,5 @@ Open the GitHub Pages site over HTTPS in a modern browser. On supported browsers
 Кнопка «Недавние» показывает до десяти последних добавленных композиций по возрастанию ID локальной базы. Фильтр сочетается с поиском, исполнителем, избранным и плейлистом.
 
 Историю прослушивания можно очистить отдельной кнопкой в каталоге. Перед очисткой приложение просит подтверждение.
+
+- Album detail pages show the album artwork, artists, track count, and playable track list, with one-tap album playback.
