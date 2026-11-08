@@ -589,7 +589,8 @@ function downloadJson(data,name){
 async function exportBackup(){
  if(!db)await openLibrary();
  const saved=await readTracks();
- const socialBackup={followedArtists:loadFollowedArtists(),artistSubscriptions:loadArtistSubscriptions(),artistPosts:loadArtistPosts(),artistInbox:loadArtistInbox()};\n if(!saved.length&&!playlists.length&&!socialBackup.followedArtists.length&&!socialBackup.artistSubscriptions.length&&!socialBackup.artistPosts.length&&!socialBackup.artistInbox.length){alert('Пока нечего сохранять. Сначала добавь музыку, создай плейлист или сохрани социальные данные.');return}
+ const socialBackup={followedArtists:loadFollowedArtists(),artistSubscriptions:loadArtistSubscriptions(),artistPosts:loadArtistPosts(),artistInbox:loadArtistInbox()};
+ if(!saved.length&&!playlists.length&&!socialBackup.followedArtists.length&&!socialBackup.artistSubscriptions.length&&!socialBackup.artistPosts.length&&!socialBackup.artistInbox.length){alert('Пока нечего сохранять. Сначала добавь музыку, создай плейлист или сохрани социальные данные.');return}
  if(!confirm('Создать полную резервную копию профиля, музыки, плейлистов, подписок, публикаций и откликов? Большая музыкальная библиотека может занять много памяти и времени.'))return;
  const button=document.getElementById('exportBackup');
  if(button){button.disabled=true;button.textContent='Готовим копию…'}
