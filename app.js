@@ -129,18 +129,35 @@ function renderQueue(){
  if(count)count.textContent=String(upcoming.length);
  list.replaceChildren();
  if(!upcoming.length){const empty=document.createElement('p');empty.className='queue-empty';empty.textContent='Следующих композиций пока нет. Очередь строится по текущему каталогу и фильтрам.';list.appendChild(empty);return}
- upcoming.forEach((index,n)=>{const track=tracks[index];if(!track)return;const row=document.createElement('button');row.type='button';row.className='queue-item';row.setAttribute('aria-label','Воспроизвести '+track.name);const number=document.createElement('span');number.className='queue-number';number.textContent=String(n+1).padStart(2,'0');const title=document.createElement('span');title.className='queue-title';title.textContent=track.name;const artist=document.createElement('span');artist.className='queue-artist';artist.textContent=track.artist||artistProfile.name||'Мой проект';row.append(number,title,artist);row.addEventListener('click',()=>load(index,true));list.appendChild(row)});
+ upcoming.forEach((index,n)=>{const track=tracks[index];if(!track)return;const row=document.createElement('div');row.className='queue-item';const number=document.createElement('span');number.className='queue-number';number.textContent=String(n+1).padStart(2,'0');const play=document.createElement('button');play.type='button';play.className='queue-track-button';play.textContent=track.name;play.setAttribute('aria-label','Воспроизвести '+track.name);const artist=document.createElement('span');artist.className='queue-artist';artist.textContent=track.artist||artistProfile.name||'Мой проект';const actions=document.createElement('span');actions.className='queue-actions';[['↑','up','Поднять'],['↓','down','Опустить'],['×','remove','Убрать из очереди']].forEach(([label,action,title])=>{const button=document.createElement('button');button.type='button';button.textContent=label;button.title=title;button.setAttribute('aria-label',title+': '+track.name);button.disabled=(action==='up'&&n===0)||(action==='down'&&n===upcoming.length-1);button.addEventListener('click',()=>changeQueueItem(index,action));actions.appendChild(button)});play.addEventListener('click',()=>load(index,true));row.append(number,play,artist,actions);list.appendChild(row)});
 }
+let queueOrderIds=null;
 function getPlaybackOrder(){
  const queue=playbackQueue(),signature=queue.join(',');
- if(!shuffleEnabled)return queue;
- if(signature!==shuffleSignature||!shuffleOrder.length){
-  shuffleSignature=signature;shuffleOrder=queue.slice();
-  for(let i=shuffleOrder.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[shuffleOrder[i],shuffleOrder[j]]=[shuffleOrder[j],shuffleOrder[i]]}
-  const currentPosition=shuffleOrder.indexOf(current);
-  if(currentPosition>0)[shuffleOrder[0],shuffleOrder[currentPosition]]=[shuffleOrder[currentPosition],shuffleOrder[0]];
+ let order;
+ if(!shuffleEnabled)order=queue;
+ else{
+  if(signature!==shuffleSignature||!shuffleOrder.length){
+   shuffleSignature=signature;shuffleOrder=queue.slice();
+   for(let i=shuffleOrder.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[shuffleOrder[i],shuffleOrder[j]]=[shuffleOrder[j],shuffleOrder[i]]}
+   const currentPosition=shuffleOrder.indexOf(current);
+   if(currentPosition>0)[shuffleOrder[0],shuffleOrder[currentPosition]]=[shuffleOrder[currentPosition],shuffleOrder[0]];
+  }
+  order=shuffleOrder.filter(index=>queue.includes(index));
  }
- return shuffleOrder.filter(index=>queue.includes(index));
+ if(!queueOrderIds)return order;
+ const byId=new Map(order.map(index=>[String(tracks[index]?.id),index]));
+ const edited=queueOrderIds.map(id=>byId.get(String(id))).filter(index=>index!==undefined);
+ order.forEach(index=>{if(!edited.includes(index))edited.push(index)});
+ queueOrderIds=edited.map(index=>tracks[index].id);
+ return edited;
+}
+function changeQueueItem(index,action){
+ const order=getPlaybackOrder(),position=order.indexOf(index),currentPosition=order.indexOf(current);
+ if(position<0||position<=currentPosition)return;
+ if(action==='remove')order.splice(position,1);
+ else{const target=position+(action==='up'?-1:1);if(target<=currentPosition||target>=order.length)return;[order[position],order[target]]=[order[target],order[position]]}
+ queueOrderIds=order.map(item=>tracks[item].id);renderQueue();
 }
 function stepTrack(direction){
  if(repeatMode==='one'&&direction>0){audio.currentTime=0;audio.play().catch(()=>{});return}
