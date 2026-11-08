@@ -91,6 +91,7 @@ function getVisibleTrackEntries(){
  visible.sort((a,b)=>{
   if(sort==='title')return (a.track.name||'').localeCompare(b.track.name||'','ru',{sensitivity:'base'});
   if(sort==='artist')return (a.track.artist||'').localeCompare(b.track.artist||'','ru',{sensitivity:'base'})||(a.track.name||'').localeCompare(b.track.name||'','ru',{sensitivity:'base'});
+  if(sort==='duration'){const da=Number.isFinite(a.track.duration)?a.track.duration:Infinity,db=Number.isFinite(b.track.duration)?b.track.duration:Infinity;return da-db||(Number(b.track.id)||b.index)-(Number(a.track.id)||a.index)}
   return (Number(b.track.id)||b.index)-(Number(a.track.id)||a.index);
  });
  return visible;
@@ -564,6 +565,7 @@ async function scanTrackDurations(){
   }
  };
  await Promise.all(Array.from({length:Math.min(3,pending.length)},worker));
+ if(document.getElementById('trackSort')?.value==='duration')render();
 }
 async function refreshLibrary(){
  const previousTrack=current>=0?tracks[current]:null;
