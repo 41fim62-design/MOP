@@ -437,3 +437,7 @@ body.file-dragging{outline:3px solid #a78bfa;outline-offset:-7px}
 
 .artist-post-card.is-pinned{border-color:#9b7ad4;box-shadow:inset 3px 0 #a78bfa;background:linear-gradient(110deg,#1b1625,#100f15 55%)}
 .artist-post-actions button[aria-pressed="true"]{border-color:#a78bfa;background:#302342;color:#fff}
+
+#artistPostCounter{display:block;text-align:right;font-variant-numeric:tabular-nums;color:var(--muted)}
+.artist-post-actions button{min-height:32px}
+@media(max-width:480px){.artist-post-actions{flex-wrap:wrap}.artist-post-actions button{flex:1 1 auto}}
