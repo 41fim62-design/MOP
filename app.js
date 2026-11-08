@@ -78,7 +78,29 @@ function trackWord(n){
  if(mod10>=2&&mod10<=4&&(mod100<12||mod100>14))return 'трека';
  return 'треков';
 }
+function formatBytes(bytes){
+ if(!Number.isFinite(bytes)||bytes<=0)return '0 Б';
+ const units=['Б','КБ','МБ','ГБ'];
+ const power=Math.min(Math.floor(Math.log(bytes)/Math.log(1024)),units.length-1);
+ const value=bytes/Math.pow(1024,power);
+ return value.toLocaleString('ru-RU',{maximumFractionDigits:power===0?0:1})+' '+units[power];
+}
+function updateLibraryStats(){
+ const size=tracks.reduce((sum,track)=>sum+(Number(track.blob?.size)||0),0);
+ const favorites=tracks.filter(track=>track.favorite).length;
+ const values={
+  libraryStatTracks:tracks.length,
+  libraryStatSize:formatBytes(size),
+  libraryStatFavorites:favorites,
+  libraryStatPlaylists:playlists.length
+ };
+ Object.entries(values).forEach(([id,value])=>{
+  const node=document.getElementById(id);
+  if(node)node.textContent=String(value);
+ });
+}
 function render(){
+ updateLibraryStats();
  const selected=playlists.find(p=>p.id===activePlaylistId);
  const countEl=document.getElementById('trackCount');
  if(countEl)countEl.textContent=tracks.length+' '+trackWord(tracks.length)+(selected?' · в «'+selected.name+'»: '+selected.trackIds.length:'');
