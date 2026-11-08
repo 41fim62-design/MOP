@@ -458,3 +458,7 @@ body.file-dragging{outline:3px solid #a78bfa;outline-offset:-7px}
 
 /* Local artist feed search */
 .artist-post-search{width:100%;box-sizing:border-box;margin:0 0 12px;padding:10px 12px;border:1px solid #494052;border-radius:9px;background:#100f15;color:#fff;font:inherit;font-size:12px}.artist-post-search:focus{outline:2px solid #8d70d3;outline-offset:2px}.artist-post-search[hidden]{display:none}#artistPostCount{font-size:10px;color:var(--muted);letter-spacing:0}
+
+
+/* Artist publication export controls */
+.artist-posts-tools{display:flex;align-items:center;gap:9px}.artist-post-export{padding:7px 10px;border:1px solid #6e579d;border-radius:18px;background:#211b30;color:#eee;font-size:10px;white-space:nowrap;cursor:pointer}.artist-post-export:hover{border-color:#b49aff;background:#302342}@media(max-width:420px){.artist-posts-heading{align-items:flex-start}.artist-posts-tools{flex-direction:column;align-items:flex-end}}
