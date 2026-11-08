@@ -4,6 +4,7 @@ const tracksEl=document.getElementById('tracks');
 const playBtn=document.getElementById('play');
 const cassette=document.getElementById('cassette');
 const seek=document.getElementById('seek');
+const searchInput=document.getElementById('trackSearch');
 let tracks=[],current=-1,db=null;
 const fmt=s=>!Number.isFinite(s)?'0:00':Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0');
 function openLibrary(){
@@ -39,7 +40,13 @@ function render(){
  document.getElementById('trackCount').textContent=tracks.length+' '+trackWord(tracks.length);
  if(!tracks.length){tracksEl.innerHTML='<div class="empty">Здесь появятся твои треки.<br>Нажми «Загрузить музыку», чтобы добавить аудио с устройства.</div>';return}
  tracksEl.innerHTML='';
- tracks.forEach((t,i)=>{
+ const query=(searchInput?.value||'').trim().toLocaleLowerCase('ru');
+ const visible=tracks.map((track,index)=>({track,index})).filter(({track})=>track.name.toLocaleLowerCase('ru').includes(query));
+ if(!visible.length){
+  tracksEl.innerHTML='<div class="empty">'+(query?'Ничего не найдено. Попробуй другое название.':'В библиотеке пока нет треков.')+'</div>';
+  return;
+ }
+ visible.forEach(({track:t,index:i})=>{
   const row=document.createElement('div');row.className='track'+(i===current?' active':'');
   row.innerHTML='<div class="track-art">M</div><div class="track-info"><b></b><span>Сохранено на устройстве</span></div><button class="track-play" aria-label="Играть">▶</button><button class="track-delete" aria-label="Удалить трек" title="Удалить трек">×</button>';
   row.querySelector('b').textContent=t.name;
@@ -84,6 +91,7 @@ function sync(){
  }
  cassette.classList.toggle('playing',active);playBtn.textContent=active?'Ⅱ':'▶';
 }
+searchInput?.addEventListener('input',render);
 input.addEventListener('change',async e=>{
  const files=Array.from(e.target.files||[]).filter(file=>file.type.startsWith('audio/')||/\.(mp3|wav|ogg|flac|m4a|aac|opus)$/i.test(file.name));
  if(!files.length){input.value='';return}
