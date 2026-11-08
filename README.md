@@ -57,3 +57,5 @@ Open the GitHub Pages site over HTTPS in a modern browser. On supported browsers
 - Full backup now also includes followed artists, shared-profile subscriptions, local artist publications and saved listener replies. Import restores these local social records with validation and size limits. Older version-1 backups without the optional social object remain compatible.
 
 - Artist publications support one pinned announcement. Pinning moves it to the top of the local feed; pin state is included in backup/restore. This remains device-local until a shared backend exists.
+
+- Artist posts can now be edited in place (up to 500 characters); edits keep the post ID and pin state, and shared links can be regenerated with the updated text. The composer displays a live character count.
