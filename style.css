@@ -209,3 +209,14 @@
 .cassette.playing .tape-flow{opacity:.95;animation:tapeTravel .32s linear infinite}
 @keyframes tapeTravel{to{stroke-dashoffset:-22}}
 @media(prefers-reduced-motion:reduce){.cassette.playing .tape-flow{animation:none}}
+
+/* Mechanical detail and balanced reel winding */
+.tape-mechanism{max-width:100%;min-width:0}
+.left-spool,.right-spool{transform-box:view-box;transform-origin:50% 50%}
+.cassette.playing .left-spool{animation:spoolTurn 1.15s linear infinite}
+.cassette.playing .right-spool{animation:spoolTurnReverse 1.15s linear infinite}
+.spool-hub{pointer-events:none}
+.left-pack,.right-pack{stroke-linecap:butt}
+@media(prefers-reduced-motion:reduce){
+ .cassette.playing .left-spool,.cassette.playing .right-spool{animation:none}
+}
