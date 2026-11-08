@@ -7,7 +7,7 @@
 <meta name="description" content="MOP — Music of People. Музыка независимых исполнителей.">
 <title>MOP — Music of People</title>
 <link rel="manifest" href="manifest.json">
-<link rel="stylesheet" href="style.css?v=20261108d">
+<link rel="stylesheet" href="style.css?v=20261108e">
 </head>
 <body>
 <header class="top"><div class="brand">MOP<span>®</span><div class="tag">MUSIC OF PEOPLE</div></div><label class="upload">＋ Загрузить музыку<input id="fileInput" type="file" accept="audio/*" multiple hidden></label></header>
@@ -19,10 +19,11 @@
 <div class="cassette-wrap"><div class="cassette" id="cassette"><div class="cassette-label"><b>MOP AUDIO</b><b class="cassette-type">TYPE II · 90</b></div><div class="window"><svg class="tape-mechanism" viewBox="0 0 200 58" role="img" aria-label="Кассетная плёнка перематывается с левой катушки на правую">
 <defs><pattern id="tapeWinding" width="2" height="2" patternUnits="userSpaceOnUse"><path d="M0 0H2" stroke="#c18a59" stroke-width=".7"/></pattern><linearGradient id="tapeStrip" x2="0" y2="1"><stop stop-color="#f4d39b"/><stop offset=".35" stop-color="#8a552f"/><stop offset=".7" stop-color="#392219"/><stop offset="1" stop-color="#e8bd7d"/></linearGradient></defs>
 <path class="tape-strip" d="M38 29H162" stroke="url(#tapeStrip)" stroke-width="4" stroke-linecap="round"/>
+<path class="tape-flow" d="M38 29H162" fill="none" stroke="#fff0c8" stroke-width="1" stroke-dasharray="2 9" stroke-linecap="round" opacity=".95"/>
 <g class="left-spool"><circle cx="38" cy="29" r="23" fill="#17151a" stroke="#c9c1b5" stroke-width="2"/><circle class="left-pack" cx="38" cy="29" r="17" fill="none" stroke="#9a663d" stroke-width="8" stroke-dasharray="2 1"/><circle cx="38" cy="29" r="8" fill="#29252b" stroke="#e2d8c9" stroke-width="3"/><circle cx="38" cy="29" r="3" fill="#151319"/></g>
 <g class="right-spool"><circle cx="162" cy="29" r="23" fill="#17151a" stroke="#c9c1b5" stroke-width="2"/><circle class="right-pack" cx="162" cy="29" r="7" fill="none" stroke="#9a663d" stroke-width="8" stroke-dasharray="2 1"/><circle cx="162" cy="29" r="8" fill="#29252b" stroke="#e2d8c9" stroke-width="3"/><circle cx="162" cy="29" r="3" fill="#151319"/></g>
 </svg></div><div class="cassette-bottom"><span>HIGH QUALITY SOUND</span><span>MADE FOR PEOPLE</span></div></div><div class="controls"><button id="prev" aria-label="Предыдущий">|◀</button><button class="play" id="play" aria-label="Воспроизвести">▶</button><button id="next" aria-label="Следующий">▶|</button></div></div>
 <div class="timeline"><span id="elapsed">0:00</span><input id="seek" type="range" min="0" max="1000" value="0"><span id="duration">0:00</span></div><div class="volume">VOLUME <input id="volume" type="range" min="0" max="1" step=".01" value=".8"></div>
 </section>
-<audio id="audio"></audio><script src="app.js?v=20261108d"></script>
+<audio id="audio"></audio><script src="app.js?v=20261108e"></script>
 </body></html>
