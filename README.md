@@ -47,3 +47,5 @@ Open the GitHub Pages site over HTTPS in a modern browser. On supported browsers
 - Artist profiles support external VK, Telegram, and Yandex Music links. Valid HTTPS links appear on the local profile and are included in shareable profile URLs and JSON backups. Shared cards never expose local audio files.
 
 - Shared artist cards include a follow/unfollow action. Followed shared profiles are saved locally, listed in My subscriptions, and can be reopened or unfollowed. This is device-local; cross-device synchronized subscriptions require a shared backend.
+
+- Artist publication feed: create short local posts about releases and music, optionally referencing the currently selected track, then share a standalone read-only post URL. Posts remain on the creator's device; shared URLs carry only text and metadata, never audio files.
