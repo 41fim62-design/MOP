@@ -101,13 +101,15 @@ function render(){
   const favorite=document.createElement('button');favorite.className='track-favorite';favorite.type='button';favorite.setAttribute('aria-label',t.favorite?'Убрать из избранного':'Добавить в избранное');favorite.title=favorite.getAttribute('aria-label');favorite.textContent=t.favorite?'★':'☆';
   const add=document.createElement('button');add.className='track-add-playlist';add.type='button';add.setAttribute('aria-label','Добавить или убрать из плейлиста');add.title=add.getAttribute('aria-label');add.textContent=inPlaylist?'✓':'＋';
   const play=document.createElement('button');play.className='track-play';play.type='button';play.setAttribute('aria-label','Играть');play.textContent='▶';
+  const editBtn=document.createElement('button');editBtn.className='track-edit';editBtn.type='button';editBtn.setAttribute('aria-label','Изменить название и исполнителя');editBtn.title='Изменить данные трека';editBtn.textContent='✎';
   const shareBtn=document.createElement('button');shareBtn.className='track-share';shareBtn.type='button';shareBtn.setAttribute('aria-label','Поделиться аудиофайлом');shareBtn.title='Поделиться треком';shareBtn.textContent='↗';
   const exportBtn=document.createElement('button');exportBtn.className='track-export';exportBtn.type='button';exportBtn.setAttribute('aria-label','Скачать копию трека');exportBtn.title='Скачать копию';exportBtn.textContent='↓';
   const remove=document.createElement('button');remove.className='track-delete';remove.type='button';remove.setAttribute('aria-label','Удалить трек');remove.title='Удалить трек';remove.textContent='×';
-  row.append(art,info,favorite,add,shareBtn,exportBtn,play,remove);
+  row.append(art,info,favorite,add,editBtn,shareBtn,exportBtn,play,remove);
   row.onclick=()=>load(i,true);
   favorite.onclick=e=>{e.stopPropagation();toggleFavorite(i)};
   add.onclick=e=>{e.stopPropagation();addToPlaylist(i)};
+  editBtn.onclick=e=>{e.stopPropagation();editTrackMetadata(i)};
   shareBtn.onclick=e=>{e.stopPropagation();shareTrack(i)};
   exportBtn.onclick=e=>{e.stopPropagation();exportTrack(i)};
   remove.onclick=e=>{e.stopPropagation();removeTrack(i)};
@@ -233,6 +235,28 @@ async function toggleFavorite(index){
   });
   track.favorite=next;render();
  }catch(error){alert('Не удалось обновить избранное. Попробуй ещё раз.')}
+}
+async function editTrackMetadata(index){
+ const track=tracks[index];if(!track||!db)return;
+ const name=prompt('Название трека:',track.name||'');
+ if(name===null)return;
+ const cleanName=name.trim().slice(0,180);
+ if(!cleanName){alert('Название трека не может быть пустым.');return}
+ const artist=prompt('Имя исполнителя:',track.artist||artistProfile.name||'');
+ if(artist===null)return;
+ const cleanArtist=artist.trim().slice(0,100);
+ try{
+  await new Promise((resolve,reject)=>{
+   const tx=db.transaction('tracks','readwrite'),store=tx.objectStore('tracks'),request=store.get(track.id);
+   request.onsuccess=()=>{
+    if(!request.result){reject(new Error('Трек не найден'));return}
+    request.result.name=cleanName;request.result.artist=cleanArtist;store.put(request.result);
+   };
+   request.onerror=()=>reject(request.error);
+   tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||new Error('Операция отменена'));
+  });
+  track.name=cleanName;track.artist=cleanArtist;render();
+ }catch(error){alert('Не удалось сохранить изменения трека. Попробуй ещё раз.')}
 }
 async function removeTrack(index){
  const track=tracks[index];
