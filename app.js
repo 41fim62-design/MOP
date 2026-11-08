@@ -132,7 +132,9 @@ function render(){
   const selectBox=document.createElement('input');selectBox.type='checkbox';selectBox.checked=selectedTrackIds.has(t.id);selectBox.setAttribute('aria-label','Выбрать '+t.name);selectBox.onclick=e=>e.stopPropagation();selectBox.onchange=()=>{if(selectBox.checked)selectedTrackIds.add(t.id);else selectedTrackIds.delete(t.id);updateBulkTools(visible.map(item=>item.track.id))};
   selectLabel.onclick=e=>e.stopPropagation();selectLabel.appendChild(selectBox);
   const inPlaylist=activePlaylist&&activePlaylist.trackIds.includes(t.id);
-  const art=document.createElement('div');art.className='track-art';art.textContent='M';
+  const art=document.createElement('button');art.className='track-art track-cover-button';art.type='button';art.title='Установить обложку';art.setAttribute('aria-label','Изменить обложку: '+t.name);
+  if(t.coverUrl){const image=document.createElement('img');image.src=t.coverUrl;image.alt='Обложка '+t.name;art.appendChild(image)}else art.textContent='M';
+  art.onclick=e=>{e.stopPropagation();chooseTrackCover(t.id)};
   const info=document.createElement('div');info.className='track-info';
   const title=document.createElement('b');title.textContent=t.name;
   const subtitle=document.createElement('span');subtitle.textContent=(t.artist||artistProfile.name||'Мой проект')+' · '+(inPlaylist?'В плейлисте «'+activePlaylist.name+'»':'На этом устройстве');
@@ -216,6 +218,34 @@ async function shareTrack(index){
  exportTrack(index);
  alert('Прямая отправка файла не поддерживается этим браузером. Трек скачан, его можно прикрепить к сообщению.');
 }
+
+async function normalizeCover(file){
+ if(!file||!file.type.startsWith('image/'))throw new Error('Выбери файл изображения.');
+ if(file.size>15*1024*1024)throw new Error('Изображение должно быть меньше 15 МБ.');
+ if(!('createImageBitmap'in window))return file;
+ const bitmap=await createImageBitmap(file);
+ const max=900,scale=Math.min(1,max/Math.max(bitmap.width,bitmap.height));
+ const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(bitmap.width*scale));canvas.height=Math.max(1,Math.round(bitmap.height*scale));
+ const ctx=canvas.getContext('2d');ctx.drawImage(bitmap,0,0,canvas.width,canvas.height);bitmap.close();
+ return await new Promise((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(new Error('Не удалось обработать обложку')),'image/jpeg',.84));
+}
+async function chooseTrackCover(trackId){
+ const picker=document.createElement('input');picker.type='file';picker.accept='image/*';picker.hidden=true;document.body.appendChild(picker);
+ picker.onchange=async()=>{
+  const file=picker.files?.[0];picker.remove();if(!file)return;
+  try{
+   const cover=await normalizeCover(file);
+   await new Promise((resolve,reject)=>{
+    const tx=db.transaction('tracks','readwrite'),store=tx.objectStore('tracks'),req=store.get(trackId);
+    req.onsuccess=()=>{if(!req.result){reject(new Error('Трек не найден'));return}req.result.cover=cover;store.put(req.result)};
+    req.onerror=()=>reject(req.error);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||new Error('Операция отменена'));
+   });
+   await refreshLibrary();
+  }catch(error){alert(error.message||'Не удалось сохранить обложку.')}
+ };
+ picker.click();
+}
+
 function exportTrack(index){
  const track=tracks[index];if(!track?.blob)return;
  const url=URL.createObjectURL(track.blob),link=document.createElement('a');
@@ -263,7 +293,7 @@ async function exportBackup(){
   const backupTracks=[];
   for(const track of saved){
    const sourceBlob=track.blob?.type?.startsWith('audio/')?track.blob:new Blob([track.blob],{type:guessAudioMime(track.name)});
-   backupTracks.push({id:track.id,name:track.name||'Без названия',artist:track.artist||'',type:sourceBlob.type,favorite:!!track.favorite,data:await blobToDataUrl(sourceBlob)});
+   backupTracks.push({id:track.id,name:track.name||'Без названия',artist:track.artist||'',type:sourceBlob.type,favorite:!!track.favorite,data:await blobToDataUrl(sourceBlob),cover:track.cover instanceof Blob?await blobToDataUrl(track.cover):null});
   }
   downloadJson({format:'MOP_BACKUP',version:1,createdAt:new Date().toISOString(),artistProfile,playlists,tracks:backupTracks},'MOP-backup-'+new Date().toISOString().slice(0,10)+'.json');
   alert('Резервная копия создана. Сохрани JSON-файл отдельно от телефона, чтобы не потерять музыку.');
@@ -280,6 +310,7 @@ async function importBackup(file){
   const restored=backup.tracks.map((t,index)=>{
    const blob=dataUrlToBlob(t.data);
    const record={name:String(t.name||'Без названия').slice(0,180),artist:String(t.artist||'').slice(0,100),blob,type:blob.type||String(t.type||''),favorite:!!t.favorite};
+   if(t.cover)record.cover=dataUrlToBlob(t.cover);
    if(Number.isSafeInteger(t.id)&&t.id>0)record.id=t.id;
    return record;
   });
@@ -362,6 +393,8 @@ async function removeTrack(index){
 function load(i,autoplay){
  if(i<0||i>=tracks.length)return;
  current=i;audio.pause();audio.src=tracks[i].url;seek.value=0;elapsedEl.textContent='0:00';durationEl.textContent='0:00';
+ const playerCover=document.querySelector('.player .cover');
+ if(playerCover){playerCover.replaceChildren();if(tracks[i].coverUrl){const image=document.createElement('img');image.src=tracks[i].coverUrl;image.alt='Обложка '+tracks[i].name;playerCover.appendChild(image)}else playerCover.textContent='M'}
  document.getElementById('currentTitle').textContent=tracks[i].name;
  document.getElementById('currentArtist').textContent=tracks[i].artist||artistProfile.name||'Мой проект';
  render();if(autoplay)audio.play().catch(()=>{});sync();
@@ -419,7 +452,7 @@ async function refreshLibrary(){
  const wasPlaying=!!previousTrack&&!audio.paused;
  const saved=await readTracks();
  tracks.forEach(t=>URL.revokeObjectURL(t.url));
- tracks=saved.map(t=>({...t,url:URL.createObjectURL(t.blob)}));
+ tracks=saved.map(t=>({...t,url:URL.createObjectURL(t.blob),coverUrl:t.cover instanceof Blob?URL.createObjectURL(t.cover):''}));
  renderArtistProfile();
  const restoredIndex=previousTrack?tracks.findIndex(t=>t.id===previousTrack.id):-1;
  render();
