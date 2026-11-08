@@ -62,3 +62,6 @@ Open the GitHub Pages site over HTTPS in a modern browser. On supported browsers
 
 
 - Artist inbox now supports searching saved listener replies by author, date, message text, or original post, and exporting all saved replies as a UTF-8 CSV file for spreadsheet apps. The inbox remains local to the current browser.
+
+
+- The artist post composer now shows a live preview and automatically saves an unfinished draft locally while typing. The draft is restored when the page is reopened and cleared after publishing. Drafts remain in the current browser only.
