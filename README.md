@@ -55,3 +55,5 @@ Open the GitHub Pages site over HTTPS in a modern browser. On supported browsers
 - Local artist inbox: when an artist opens a listener's reply link, they can save that reply into a local inbox on their device. Inbox supports up to 100 saved replies and individual deletion. This is manual link-based delivery, not automatic server messaging.
 
 - Full backup now also includes followed artists, shared-profile subscriptions, local artist publications and saved listener replies. Import restores these local social records with validation and size limits. Older version-1 backups without the optional social object remain compatible.
+
+- Artist publications support one pinned announcement. Pinning moves it to the top of the local feed; pin state is included in backup/restore. This remains device-local until a shared backend exists.
