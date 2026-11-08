@@ -204,8 +204,10 @@ async function readID3Tags(file){
  try{
   const head=new Uint8Array(await file.slice(0,10).arrayBuffer());
   if(head[0]===73&&head[1]===68&&head[2]===51){
-   const version=head[3],tagSize=decodeSynchsafe(head.subarray(6,10)),limit=Math.min(tagSize,Math.max(0,file.size-10));
+   const version=head[3],tagSize=decodeSynchsafe(head.subarray(6,10)),limit=Math.min(tagSize,16*1024*1024,Math.max(0,file.size-10));
    const data=new Uint8Array(await file.slice(10,10+limit).arrayBuffer());let offset=0;
+   if((head[5]&0x40)&&version===3&&data.length>=4)offset=4+((data[0]*0x1000000)+(data[1]<<16)+(data[2]<<8)+data[3]);
+   else if((head[5]&0x40)&&version===4&&data.length>=4)offset=decodeSynchsafe(data.subarray(0,4));
    while(offset<data.length){
     let id,size,headerSize;
     if(version===2){if(offset+6>data.length)break;id=String.fromCharCode(...data.subarray(offset,offset+3));size=(data[offset+3]<<16)|(data[offset+4]<<8)|data[offset+5];headerSize=6}
