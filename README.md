@@ -69,3 +69,5 @@ Open the GitHub Pages site over HTTPS in a modern browser. On supported browsers
 - Artist post editing now uses an accessible native dialog instead of a browser prompt, with a live 500-character counter, inline validation, and cancel-safe editing.
 
 - The local artist feed now has instant search across publication text, linked track titles, and album names, with a live visible/total post count and a clear no-results state. Search remains local to the current browser.
+
+- Local artist publications can now be exported to a UTF-8 CSV file for spreadsheet apps. The export includes post date, artist, text, linked track and album, pinned status, and edit date; it exports the complete local feed rather than only currently filtered results.
