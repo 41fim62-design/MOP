@@ -129,8 +129,8 @@ function render(){
  visible.forEach(({track:t,index:i})=>{
   const row=document.createElement('div');row.className='track'+(i===current?' active':'');
   const selectLabel=document.createElement('label');selectLabel.className='track-select';selectLabel.title='Выбрать трек';
-  const selectBox=document.createElement('input');selectBox.type='checkbox';selectBox.checked=selectedTrackIds.has(t.id);selectBox.setAttribute('aria-label','Выбрать '+t.name);selectBox.onchange=()=>{if(selectBox.checked)selectedTrackIds.add(t.id);else selectedTrackIds.delete(t.id);updateBulkTools(visible.map(item=>item.track.id))};
-  selectLabel.appendChild(selectBox);
+  const selectBox=document.createElement('input');selectBox.type='checkbox';selectBox.checked=selectedTrackIds.has(t.id);selectBox.setAttribute('aria-label','Выбрать '+t.name);selectBox.onclick=e=>e.stopPropagation();selectBox.onchange=()=>{if(selectBox.checked)selectedTrackIds.add(t.id);else selectedTrackIds.delete(t.id);updateBulkTools(visible.map(item=>item.track.id))};
+  selectLabel.onclick=e=>e.stopPropagation();selectLabel.appendChild(selectBox);
   const inPlaylist=activePlaylist&&activePlaylist.trackIds.includes(t.id);
   const art=document.createElement('div');art.className='track-art';art.textContent='M';
   const info=document.createElement('div');info.className='track-info';
