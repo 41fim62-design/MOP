@@ -51,3 +51,5 @@ Open the GitHub Pages site over HTTPS in a modern browser. On supported browsers
 - Artist publication feed: create short local posts about releases and music, optionally referencing the currently selected track, then share a standalone read-only post URL. Posts remain on the creator's device; shared URLs carry only text and metadata, never audio files.
 
 - Shared post interactions: local emoji reaction counters and shareable reply links. Reactions are stored only in the reacting browser; replies are generated as separate links that the listener sends to the author. There is no automatic cross-user comment feed or server synchronization.
+
+- Local artist inbox: when an artist opens a listener's reply link, they can save that reply into a local inbox on their device. Inbox supports up to 100 saved replies and individual deletion. This is manual link-based delivery, not automatic server messaging.
