@@ -117,7 +117,6 @@ async function removeTrack(index){
   });
   playlists.forEach(p=>p.trackIds=p.trackIds.filter(id=>id!==track.id));savePlaylists();
   if(index===current){audio.pause();audio.removeAttribute('src');audio.load()}
-  else if(index<current)current--;
   await refreshLibrary();
  }catch(error){alert('Не удалось удалить трек. Попробуй ещё раз.')}
 }
