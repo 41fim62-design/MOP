@@ -49,7 +49,7 @@ function render(){
  tracksEl.innerHTML='';
  const query=(searchInput?.value||'').trim().toLocaleLowerCase('ru');
  const activePlaylist=playlists.find(p=>p.id===activePlaylistId);
- const visible=tracks.map((track,index)=>({track,index})).filter(({track})=>track.name.toLocaleLowerCase('ru').includes(query)&&(!showFavorites||track.favorite));
+ const visible=tracks.map((track,index)=>({track,index})).filter(({track})=>track.name.toLocaleLowerCase('ru').includes(query)&&(!showFavorites||track.favorite)&&(!activePlaylist||activePlaylist.trackIds.includes(track.id)));
  if(!visible.length){
   tracksEl.innerHTML='<div class="empty">'+(showFavorites?'В избранном пока пусто. Нажми ☆ у любого трека.':query?'Ничего не найдено. Попробуй другое название.':'В библиотеке пока нет треков.')+'</div>';
   return;
