@@ -454,3 +454,7 @@ body.file-dragging{outline:3px solid #a78bfa;outline-offset:-7px}
 
 /* Native modal editor for artist publications */
 .artist-post-editor textarea{width:100%;box-sizing:border-box;min-height:150px;resize:vertical;padding:12px;border:1px solid #44394f;border-radius:9px;background:#100e16;color:#fff;font:inherit;line-height:1.5;outline:none}.artist-post-editor textarea:focus{border-color:#b49aff}.post-edit-counter{justify-self:end;color:var(--muted);font-size:11px;font-variant-numeric:tabular-nums}
+
+
+/* Local artist feed search */
+.artist-post-search{width:100%;box-sizing:border-box;margin:0 0 12px;padding:10px 12px;border:1px solid #494052;border-radius:9px;background:#100f15;color:#fff;font:inherit;font-size:12px}.artist-post-search:focus{outline:2px solid #8d70d3;outline-offset:2px}.artist-post-search[hidden]{display:none}#artistPostCount{font-size:10px;color:var(--muted);letter-spacing:0}
