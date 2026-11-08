@@ -67,3 +67,5 @@ Open the GitHub Pages site over HTTPS in a modern browser. On supported browsers
 - The artist post composer now shows a live preview and automatically saves an unfinished draft locally while typing. The draft is restored when the page is reopened and cleared after publishing. Drafts remain in the current browser only.
 
 - Artist post editing now uses an accessible native dialog instead of a browser prompt, with a live 500-character counter, inline validation, and cancel-safe editing.
+
+- The local artist feed now has instant search across publication text, linked track titles, and album names, with a live visible/total post count and a clear no-results state. Search remains local to the current browser.
