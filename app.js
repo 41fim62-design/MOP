@@ -5,7 +5,7 @@ const playBtn=document.getElementById('play');
 const cassette=document.getElementById('cassette');
 const seek=document.getElementById('seek');
 const searchInput=document.getElementById('trackSearch');
-let tracks=[],current=-1,db=null;
+let tracks=[],current=-1,db=null,showFavorites=false;
 const fmt=s=>!Number.isFinite(s)?'0:00':Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0');
 function openLibrary(){
  return new Promise((resolve,reject)=>{
@@ -41,21 +41,21 @@ function render(){
  if(!tracks.length){tracksEl.innerHTML='<div class="empty">Здесь появятся твои треки.<br>Нажми «Загрузить музыку», чтобы добавить аудио с устройства.</div>';return}
  tracksEl.innerHTML='';
  const query=(searchInput?.value||'').trim().toLocaleLowerCase('ru');
- const visible=tracks.map((track,index)=>({track,index})).filter(({track})=>track.name.toLocaleLowerCase('ru').includes(query));
+ const visible=tracks.map((track,index)=>({track,index})).filter(({track})=>track.name.toLocaleLowerCase('ru').includes(query)&&(!showFavorites||track.favorite));
  if(!visible.length){
-  tracksEl.innerHTML='<div class="empty">'+(query?'Ничего не найдено. Попробуй другое название.':'В библиотеке пока нет треков.')+'</div>';
+  tracksEl.innerHTML='<div class="empty">'+(showFavorites?'В избранном пока пусто. Нажми ☆ у любого трека.':query?'Ничего не найдено. Попробуй другое название.':'В библиотеке пока нет треков.')+'</div>';
   return;
  }
  visible.forEach(({track:t,index:i})=>{
   const row=document.createElement('div');row.className='track'+(i===current?' active':'');
-  row.innerHTML='<div class="track-art">M</div><div class="track-info"><b></b><span>Сохранено на устройстве</span></div><button class="track-play" aria-label="Играть">▶</button><button class="track-delete" aria-label="Удалить трек" title="Удалить трек">×</button>';
+  row.innerHTML='<div class="track-art">M</div><div class="track-info"><b></b><span>Сохранено на устройстве</span></div><button class="track-favorite" aria-label="Добавить в избранное" title="Добавить в избранное">'+(t.favorite?'★':'☆')+'</button><button class="track-play" aria-label="Играть">▶</button><button class="track-delete" aria-label="Удалить трек" title="Удалить трек">×</button>';
   row.querySelector('b').textContent=t.name;
   row.onclick=()=>load(i,true);
   row.querySelector('.track-delete').onclick=e=>{e.stopPropagation();removeTrack(i)};
   tracksEl.appendChild(row);
  });
 }
-async function removeTrack(index){
+async function toggleFavorite(index){\n const track=tracks[index];if(!track||!db)return;\n const next=!track.favorite;\n try{\n  await new Promise((resolve,reject)=>{\n   const tx=db.transaction('tracks','readwrite');\n   const store=tx.objectStore('tracks');\n   const request=store.get(track.id);\n   request.onsuccess=()=>{if(request.result){request.result.favorite=next;store.put(request.result)}};\n   tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);\n  });\n  track.favorite=next;render();\n }catch(error){alert('Не удалось обновить избранное. Попробуй ещё раз.')}\n}\nasync function removeTrack(index){
  const track=tracks[index];
  if(!track||!db)return;
  if(!confirm('Удалить «'+track.name+'» из библиотеки этого устройства?'))return;
@@ -91,7 +91,7 @@ function sync(){
  }
  cassette.classList.toggle('playing',active);playBtn.textContent=active?'Ⅱ':'▶';
 }
-searchInput?.addEventListener('input',render);
+searchInput?.addEventListener('input',render);\ndocument.getElementById('favoritesFilter')?.addEventListener('click',e=>{\n showFavorites=!showFavorites;\n e.currentTarget.classList.toggle('active',showFavorites);\n e.currentTarget.setAttribute('aria-pressed',String(showFavorites));\n e.currentTarget.textContent=showFavorites?'★ Избранное':'☆ Избранное';\n render();\n});
 input.addEventListener('change',async e=>{
  const files=Array.from(e.target.files||[]).filter(file=>file.type.startsWith('audio/')||/\.(mp3|wav|ogg|flac|m4a|aac|opus)$/i.test(file.name));
  if(!files.length){input.value='';return}
