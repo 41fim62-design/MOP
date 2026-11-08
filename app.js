@@ -181,10 +181,65 @@ function openLibrary(){
   request.onerror=()=>reject(request.error);
  });
 }
-function storeTrack(file){
+function decodeID3Text(data){
+ const bytes=data instanceof Uint8Array?data:new Uint8Array(data);if(!bytes.length)return '';
+ const encoding=bytes[0],body=bytes.subarray(1);let text='';
+ try{
+  if(encoding===0)text=new TextDecoder('windows-1252').decode(body);
+  else if(encoding===3)text=new TextDecoder('utf-8').decode(body);
+  else if(encoding===1||encoding===2){
+   let start=0,little=encoding===1;
+   if(encoding===1&&body.length>=2){if(body[0]===255&&body[1]===254){little=true;start=2}else if(body[0]===254&&body[1]===255){little=false;start=2}}
+   const even=body.subarray(start,start+Math.floor((body.length-start)/2)*2),units=[];
+   for(let i=0;i<even.length;i+=2)units.push(little?(even[i]|even[i+1]<<8):(even[i]<<8|even[i+1]));
+   text=String.fromCharCode(...units);
+  }
+ }catch(error){return ''}
+ return text.replace(/\u0000+$/g,'').trim();
+}
+function decodeSynchsafe(bytes){return ((bytes[0]&127)<<21)|((bytes[1]&127)<<14)|((bytes[2]&127)<<7)|(bytes[3]&127)}
+async function readID3Tags(file){
+ if(!/\.mp3$/i.test(file.name||''))return {};
+ const result={};
+ try{
+  const head=new Uint8Array(await file.slice(0,10).arrayBuffer());
+  if(head[0]===73&&head[1]===68&&head[2]===51){
+   const version=head[3],tagSize=decodeSynchsafe(head.subarray(6,10)),limit=Math.min(tagSize,Math.max(0,file.size-10));
+   const data=new Uint8Array(await file.slice(10,10+limit).arrayBuffer());let offset=0;
+   while(offset<data.length){
+    let id,size,headerSize;
+    if(version===2){if(offset+6>data.length)break;id=String.fromCharCode(...data.subarray(offset,offset+3));size=(data[offset+3]<<16)|(data[offset+4]<<8)|data[offset+5];headerSize=6}
+    else{if(offset+10>data.length)break;id=String.fromCharCode(...data.subarray(offset,offset+4));size=version===4?decodeSynchsafe(data.subarray(offset+4,offset+8)):((data[offset+4]*0x1000000)+(data[offset+5]<<16)+(data[offset+6]<<8)+data[offset+7]);headerSize=10}
+    if(!id.trim()||!/[A-Z0-9]{3,4}/.test(id)||!size||offset+headerSize+size>data.length)break;
+    const flags=version===2?0:data[offset+9];
+    if(!(flags&0x0c)){
+     const frame=data.subarray(offset+headerSize,offset+headerSize+size);
+     const map={TIT2:'name',TT2:'name',TPE1:'artist',TP1:'artist',TALB:'album',TAL:'album'};
+     if(map[id]){const value=decodeID3Text(frame);if(value)result[map[id]]=value}
+     if(id==='USLT'||id==='ULT'){
+      const encoding=frame[0],body=frame.subarray(1),step=(encoding===1||encoding===2)?2:1;let split=-1;
+      for(let i=0;i+step<=body.length;i+=step){if(body[i]===0&&(step===1||body[i+1]===0)){split=i+step;break}}
+      if(split>=0){const lyrics=decodeID3Text(new Uint8Array([encoding,...body.subarray(split)]));if(lyrics)result.lyrics=lyrics.slice(0,20000)}
+     }
+    }
+    offset+=headerSize+size;
+   }
+  }
+  if(!result.name||!result.artist||!result.album){
+   const tail=new Uint8Array(await file.slice(Math.max(0,file.size-128)).arrayBuffer());
+   if(tail.length===128&&tail[0]===84&&tail[1]===65&&tail[2]===71){
+    const read=(start,length)=>new TextDecoder('windows-1252').decode(tail.subarray(start,start+length)).replace(/\u0000/g,'').trim();
+    if(!result.name)result.name=read(3,30);if(!result.artist)result.artist=read(33,30);if(!result.album)result.album=read(63,30);
+   }
+  }
+ }catch(error){return {}}
+ return result;
+}
+function storeTrack(file,tags={}){
  return new Promise((resolve,reject)=>{
   const tx=db.transaction('tracks','readwrite');
-  tx.objectStore('tracks').add({name:file.name.replace(/\.[^.]+$/,''),artist:artistProfile.name||'Мой проект',blob:file,type:file.type});
+  const name=String(tags.name||file.name.replace(/\.[^.]+$/,'')).trim().slice(0,180)||'Без названия';
+  tx.objectStore('tracks').add({name,artist:String(tags.artist||artistProfile.name||'Мой проект').slice(0,100),album:String(tags.album||'').slice(0,120),lyrics:String(tags.lyrics||'').slice(0,20000),blob:file,type:file.type});
   tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);
  });
 }
@@ -583,7 +638,7 @@ async function addAudioFiles(fileList){
   for(let index=0;index<files.length;index++){
    const file=files[index];
    if(status)status.textContent='Добавление '+(index+1)+' из '+files.length+': '+file.name;
-   try{await storeTrack(file);added++}catch(error){failed++}
+   try{const tags=await readID3Tags(file);await storeTrack(file,tags);added++}catch(error){failed++}
   }
   await refreshLibrary();
   const message='Добавлено: '+added+'. Ошибок: '+failed+'.';
