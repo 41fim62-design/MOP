@@ -441,3 +441,8 @@ body.file-dragging{outline:3px solid #a78bfa;outline-offset:-7px}
 #artistPostCounter{display:block;text-align:right;font-variant-numeric:tabular-nums;color:var(--muted)}
 .artist-post-actions button{min-height:32px}
 @media(max-width:480px){.artist-post-actions{flex-wrap:wrap}.artist-post-actions button{flex:1 1 auto}}
+
+
+/* Artist inbox search and export */
+.artist-inbox-heading>div{display:grid;gap:4px}.artist-inbox-export{padding:8px 11px;border:1px solid #6e579d;border-radius:18px;background:#211b30;color:#eee;font-size:11px;cursor:pointer}.artist-inbox-search{width:100%;margin-top:12px;padding:10px 12px;border:1px solid #494052;border-radius:9px;background:#100f15;color:#fff;font:inherit;font-size:12px}.artist-inbox-search:focus{outline:2px solid #8d70d3;outline-offset:2px}.artist-inbox-empty{margin:0;padding:12px;color:var(--muted);font-size:12px}
+@media(max-width:420px){.artist-inbox-heading{align-items:flex-start}.artist-inbox-export{flex:0 0 auto}}
