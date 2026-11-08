@@ -199,7 +199,8 @@ function render(){
   const info=document.createElement('div');info.className='track-info';
   const title=document.createElement('b');title.textContent=t.name;
   const subtitle=document.createElement('span');subtitle.textContent=(t.artist||artistProfile.name||'Мой проект')+' · '+(inPlaylist?'В плейлисте «'+activePlaylist.name+'»':'На этом устройстве');
-  info.append(title,subtitle);
+  const duration=document.createElement('span');duration.className='track-duration';duration.dataset.trackDuration=String(t.id);duration.textContent=Number.isFinite(t.duration)?fmt(t.duration):'…';
+  info.append(title,subtitle,duration);
   const favorite=document.createElement('button');favorite.className='track-favorite';favorite.type='button';favorite.setAttribute('aria-label',t.favorite?'Убрать из избранного':'Добавить в избранное');favorite.title=favorite.getAttribute('aria-label');favorite.textContent=t.favorite?'★':'☆';
   const add=document.createElement('button');add.className='track-add-playlist';add.type='button';add.setAttribute('aria-label','Добавить или убрать из плейлиста');add.title=add.getAttribute('aria-label');add.textContent=inPlaylist?'✓':'＋';
   const play=document.createElement('button');play.className='track-play';play.type='button';play.setAttribute('aria-label','Играть');play.textContent='▶';
@@ -543,6 +544,27 @@ document.addEventListener('drop',async event=>{
  const zone=document.getElementById('dropOverlay');if(zone)zone.hidden=true;
  await addAudioFiles(event.dataTransfer.files);
 });
+async function scanTrackDurations(){
+ const pending=tracks.filter(track=>!Number.isFinite(track.duration));
+ let cursor=0;
+ const worker=async()=>{
+  while(cursor<pending.length){
+   const track=pending[cursor++];
+   await new Promise(resolve=>{
+    const probe=new Audio();let finished=false;
+    const done=()=>{if(finished)return;finished=true;clearTimeout(timer);probe.onloadedmetadata=null;probe.onerror=null;probe.removeAttribute('src');probe.load();resolve()};
+    const timer=setTimeout(done,5000);
+    probe.preload='metadata';
+    probe.onloadedmetadata=()=>{
+     if(Number.isFinite(probe.duration)&&probe.duration>0){track.duration=probe.duration;const badge=document.querySelector('[data-track-duration="'+String(track.id)+'"]');if(badge)badge.textContent=fmt(track.duration)}
+     done();
+    };
+    probe.onerror=done;probe.src=track.url;
+   });
+  }
+ };
+ await Promise.all(Array.from({length:Math.min(3,pending.length)},worker));
+}
 async function refreshLibrary(){
  const previousTrack=current>=0?tracks[current]:null;
  const previousTime=audio.currentTime||0;
@@ -567,6 +589,7 @@ async function refreshLibrary(){
    },{once:true});
   }
   load(target,false);
+  scanTrackDurations();
  }else{current=-1;audio.removeAttribute('src');audio.load();sync()}
 }
 playBtn.onclick=()=>{
