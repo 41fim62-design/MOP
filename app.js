@@ -354,12 +354,19 @@ function updateLibraryStats(){
   if(node)node.textContent=String(value);
  });
 }
+function renderActivityFeed(){
+ const section=document.getElementById('activityFeed'),list=document.getElementById('activityFeedList'),count=document.getElementById('activityFeedCount');if(!section||!list)return;
+ const recent=playedTrackIds.map(id=>tracks.find(t=>String(t.id)===String(id))).filter(Boolean).slice(0,8);
+ section.hidden=recent.length===0;if(count)count.textContent=recent.length+' '+trackWord(recent.length);list.replaceChildren();
+ recent.forEach((track,index)=>{const row=document.createElement('button');row.type='button';row.className='activity-feed-item';const number=document.createElement('span');number.className='activity-feed-number';number.textContent=String(index+1).padStart(2,'0');const info=document.createElement('span');info.className='activity-feed-info';const title=document.createElement('b');title.textContent=track.name;const artist=document.createElement('small');artist.textContent=track.artist||artistProfile.name||'Мой проект';info.append(title,artist);const action=document.createElement('span');action.className='activity-feed-play';action.textContent='▶';row.append(number,info,action);row.setAttribute('aria-label','Снова слушать '+track.name);row.onclick=()=>load(tracks.indexOf(track),true);list.appendChild(row)});
+}
 function render(){
  renderQueue();
  refreshArtistFilter();
  refreshAlbumFilter();
  renderArtistCollection();
  renderAlbumCollection();
+ renderActivityFeed();
  updateLibraryStats();
  const selected=playlists.find(p=>p.id===activePlaylistId);
  const countEl=document.getElementById('trackCount');
@@ -818,7 +825,7 @@ document.getElementById('repeatToggle')?.addEventListener('click',()=>{
  repeatMode=repeatMode==='off'?'all':repeatMode==='all'?'one':'off';savePlaybackOptions();updatePlaybackOptions();
 });
 document.getElementById('prev').onclick=()=>{if(audio.currentTime>3){audio.currentTime=0;return}stepTrack(-1)};
-audio.addEventListener('play',()=>{if(current>=0){rememberPlayedTrack(tracks[current].id);if(showPlayed)render()}sync()});audio.addEventListener('pause',sync);
+audio.addEventListener('play',()=>{if(current>=0){rememberPlayedTrack(tracks[current].id);renderActivityFeed();if(showPlayed)render()}sync()});audio.addEventListener('pause',sync);
 audio.addEventListener('ended',()=>{savePlaybackState();stepTrack(1)});
 window.addEventListener('pagehide',savePlaybackState);
 audio.addEventListener('error',()=>{if(audio.currentSrc){document.getElementById('currentArtist').textContent='Не удалось воспроизвести файл. Формат может не поддерживаться браузером.';playBtn.textContent='▶';playBtn.setAttribute('aria-pressed','false')}});
