@@ -105,7 +105,7 @@ function getVisibleTrackEntries(){
  const recentTrackIds=new Set(tracks.slice().sort((a,b)=>(Number(b.id)||0)-(Number(a.id)||0)).slice(0,10).map(t=>t.id));
  const playedIds=new Set(playedTrackIds.slice(0,10).map(Number));
  const visible=tracks.map((track,index)=>({track,index})).filter(({track})=>{
-  const searchable=[track.name,track.artist,track.album].filter(Boolean).join(' ').toLocaleLowerCase('ru');
+  const searchable=[track.name,track.artist,track.album,track.lyrics].filter(Boolean).join(' ').toLocaleLowerCase('ru');
   const artistFilter=document.getElementById('artistFilter')?.value||'';
   const albumFilter=document.getElementById('albumFilter')?.value||'';
   return searchable.includes(query)&&(!artistFilter||(track.artist||'').trim()===artistFilter)&&(!albumFilter||(track.album||'').trim()===albumFilter)&&(!showFavorites||track.favorite)&&(!showRecent||recentTrackIds.has(track.id))&&(!showPlayed||playedIds.has(Number(track.id)))&&(!playlist||playlist.trackIds.includes(track.id));
