@@ -91,15 +91,24 @@ function refreshArtistFilter(){
  select.replaceChildren(new Option('Все исполнители',''),...artists.map(name=>new Option(name,name)));
  if(artists.includes(selected))select.value=selected;
 }
+function refreshAlbumFilter(){
+ const select=document.getElementById('albumFilter');if(!select)return;
+ const selected=select.value,albums=[...new Set(tracks.map(t=>(t.album||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'ru',{sensitivity:'base'}));
+ select.replaceChildren(new Option('Все альбомы',''));
+ albums.forEach(album=>select.add(new Option(album,album)));
+ select.value=albums.includes(selected)?selected:'';
+}
+
 function getVisibleTrackEntries(){
  const query=(searchInput?.value||'').trim().toLocaleLowerCase('ru');
  const playlist=playlists.find(p=>p.id===activePlaylistId);
  const recentTrackIds=new Set(tracks.slice().sort((a,b)=>(Number(b.id)||0)-(Number(a.id)||0)).slice(0,10).map(t=>t.id));
  const playedIds=new Set(playedTrackIds.slice(0,10).map(Number));
  const visible=tracks.map((track,index)=>({track,index})).filter(({track})=>{
-  const searchable=[track.name,track.artist].filter(Boolean).join(' ').toLocaleLowerCase('ru');
+  const searchable=[track.name,track.artist,track.album].filter(Boolean).join(' ').toLocaleLowerCase('ru');
   const artistFilter=document.getElementById('artistFilter')?.value||'';
-  return searchable.includes(query)&&(!artistFilter||(track.artist||'').trim()===artistFilter)&&(!showFavorites||track.favorite)&&(!showRecent||recentTrackIds.has(track.id))&&(!showPlayed||playedIds.has(Number(track.id)))&&(!playlist||playlist.trackIds.includes(track.id));
+  const albumFilter=document.getElementById('albumFilter')?.value||'';
+  return searchable.includes(query)&&(!artistFilter||(track.artist||'').trim()===artistFilter)&&(!albumFilter||(track.album||'').trim()===albumFilter)&&(!showFavorites||track.favorite)&&(!showRecent||recentTrackIds.has(track.id))&&(!showPlayed||playedIds.has(Number(track.id)))&&(!playlist||playlist.trackIds.includes(track.id));
  });
  const sort=document.getElementById('trackSort')?.value||'newest';
  visible.sort((a,b)=>{
@@ -198,6 +207,7 @@ function updateLibraryStats(){
 function render(){
  renderQueue();
  refreshArtistFilter();
+ refreshAlbumFilter();
  updateLibraryStats();
  const selected=playlists.find(p=>p.id===activePlaylistId);
  const countEl=document.getElementById('trackCount');
@@ -453,17 +463,20 @@ async function editTrackMetadata(index){
  const artist=prompt('Имя исполнителя:',track.artist||artistProfile.name||'');
  if(artist===null)return;
  const cleanArtist=artist.trim().slice(0,100);
+ const album=prompt('Название альбома (можно оставить пустым):',track.album||'');
+ if(album===null)return;
+ const cleanAlbum=album.trim().slice(0,120);
  try{
   await new Promise((resolve,reject)=>{
    const tx=db.transaction('tracks','readwrite'),store=tx.objectStore('tracks'),request=store.get(track.id);
    request.onsuccess=()=>{
     if(!request.result){reject(new Error('Трек не найден'));return}
-    request.result.name=cleanName;request.result.artist=cleanArtist;store.put(request.result);
+    request.result.name=cleanName;request.result.artist=cleanArtist;request.result.album=cleanAlbum;store.put(request.result);
    };
    request.onerror=()=>reject(request.error);
    tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||new Error('Операция отменена'));
   });
-  track.name=cleanName;track.artist=cleanArtist;render();
+  track.name=cleanName;track.artist=cleanArtist;track.album=cleanAlbum;render();
  }catch(error){alert('Не удалось сохранить изменения трека. Попробуй ещё раз.')}
 }
 async function removeTrack(index){
@@ -510,6 +523,7 @@ function sync(){
 }
 searchInput?.addEventListener('input',render);
 document.getElementById('trackSort')?.addEventListener('change',render);
+document.getElementById('albumFilter')?.addEventListener('change',render);
 document.getElementById('artistFilter')?.addEventListener('change',render);
 document.getElementById('recentTracksFilter')?.addEventListener('click',()=>{showRecent=!showRecent;const button=document.getElementById('recentTracksFilter');button?.classList.toggle('active',showRecent);button?.setAttribute('aria-pressed',String(showRecent));render()});
 document.getElementById('playedTracksFilter')?.addEventListener('click',()=>{showPlayed=!showPlayed;const button=document.getElementById('playedTracksFilter');button?.classList.toggle('active',showPlayed);button?.setAttribute('aria-pressed',String(showPlayed));render()});
