@@ -9,7 +9,7 @@ let tracks=[],current=-1,db=null,showFavorites=false,playlists=loadPlaylists(),a
 function loadArtistProfile(){try{return JSON.parse(localStorage.getItem('mop-artist-profile'))||{name:'Мой проект',bio:'Независимый исполнитель на MOP'}}catch(e){return {name:'Мой проект',bio:'Независимый исполнитель на MOP'}}}
 function saveArtistProfile(){localStorage.setItem('mop-artist-profile',JSON.stringify(artistProfile));renderArtistProfile();}
 function renderArtistProfile(){const name=document.getElementById('artistName'),bio=document.getElementById('artistBio');if(name)name.textContent=artistProfile.name||'Мой проект';if(bio)bio.textContent=artistProfile.bio||'Добавь короткое описание своего звучания.';const count=document.getElementById('artistTrackCount');if(count)count.textContent=tracks.length+' '+trackWord(tracks.length);}
-function loadPlaylists(){try{return JSON.parse(localStorage.getItem('mop-playlists')||'[]')}catch(e){return []}}
+function loadPlaylists(){try{const value=JSON.parse(localStorage.getItem('mop-playlists')||'[]');return Array.isArray(value)?value.filter(p=>p&&typeof p.id==='string'&&typeof p.name==='string'&&Array.isArray(p.trackIds)).map(p=>({...p,trackIds:[...new Set(p.trackIds.filter(id=>Number.isFinite(id)))]})):[]}catch(e){return []}}
 function savePlaylists(){localStorage.setItem('mop-playlists',JSON.stringify(playlists))}
 function renderPlaylistOptions(){const select=document.getElementById('playlistSelect');if(!select)return;select.replaceChildren(new Option('Все треки',''));playlists.forEach(p=>select.add(new Option(p.name,p.id)));select.value=activePlaylistId;const remove=document.getElementById('deletePlaylist');if(remove)remove.disabled=!activePlaylistId;}
 function setLibraryEmpty(message){const box=document.createElement('div');box.className='empty';box.textContent=message;tracksEl.replaceChildren(box);}
@@ -60,12 +60,20 @@ function render(){
  visible.forEach(({track:t,index:i})=>{
   const row=document.createElement('div');row.className='track'+(i===current?' active':'');
   const inPlaylist=activePlaylist&&activePlaylist.trackIds.includes(t.id);
-  row.innerHTML='<div class="track-art">M</div><div class="track-info"><b></b><span>'+((t.artist||artistProfile.name||'Мой проект')+' · '+(inPlaylist?'В плейлисте «'+activePlaylist.name+'»':'На этом устройстве'))+'</span></div><button class="track-favorite" aria-label="Добавить в избранное" title="Добавить в избранное">'+(t.favorite?'★':'☆')+'</button><button class="track-add-playlist" aria-label="Добавить в плейлист" title="Добавить в выбранный плейлист">'+(inPlaylist?'✓':'＋')+'</button><button class="track-play" aria-label="Играть">▶</button><button class="track-delete" aria-label="Удалить трек" title="Удалить трек">×</button> ';
-  row.querySelector('b').textContent=t.name;
+  const art=document.createElement('div');art.className='track-art';art.textContent='M';
+  const info=document.createElement('div');info.className='track-info';
+  const title=document.createElement('b');title.textContent=t.name;
+  const subtitle=document.createElement('span');subtitle.textContent=(t.artist||artistProfile.name||'Мой проект')+' · '+(inPlaylist?'В плейлисте «'+activePlaylist.name+'»':'На этом устройстве');
+  info.append(title,subtitle);
+  const favorite=document.createElement('button');favorite.className='track-favorite';favorite.type='button';favorite.setAttribute('aria-label',t.favorite?'Убрать из избранного':'Добавить в избранное');favorite.title=favorite.getAttribute('aria-label');favorite.textContent=t.favorite?'★':'☆';
+  const add=document.createElement('button');add.className='track-add-playlist';add.type='button';add.setAttribute('aria-label','Добавить или убрать из плейлиста');add.title=add.getAttribute('aria-label');add.textContent=inPlaylist?'✓':'＋';
+  const play=document.createElement('button');play.className='track-play';play.type='button';play.setAttribute('aria-label','Играть');play.textContent='▶';
+  const remove=document.createElement('button');remove.className='track-delete';remove.type='button';remove.setAttribute('aria-label','Удалить трек');remove.title='Удалить трек';remove.textContent='×';
+  row.append(art,info,favorite,add,play,remove);
   row.onclick=()=>load(i,true);
-  row.querySelector('.track-favorite').onclick=e=>{e.stopPropagation();toggleFavorite(i)};
-  row.querySelector('.track-add-playlist').onclick=e=>{e.stopPropagation();addToPlaylist(i)};
-  row.querySelector('.track-delete').onclick=e=>{e.stopPropagation();removeTrack(i)};
+  favorite.onclick=e=>{e.stopPropagation();toggleFavorite(i)};
+  add.onclick=e=>{e.stopPropagation();addToPlaylist(i)};
+  remove.onclick=e=>{e.stopPropagation();removeTrack(i)};
   tracksEl.appendChild(row);
  });
 }
@@ -160,7 +168,7 @@ async function refreshLibrary(){
  else{audio.removeAttribute('src');audio.load()}
 }
 playBtn.onclick=()=>{
- if(current<0){if(tracks.length)load(0,true);return}
+ if(current<0){const queue=playbackQueue();if(queue.length)load(queue[0],true);return}
  if(audio.paused)audio.play().catch(()=>{});else audio.pause();
 };
 document.getElementById('next').onclick=()=>stepTrack(1);
