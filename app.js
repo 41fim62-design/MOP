@@ -29,9 +29,17 @@ function readSharedArtistProfile(){
  const params=new URLSearchParams(location.search);
  const name=params.get('artist'),bio=params.get('bio'),accent=params.get('accent');
  if(!name)return null;
- return {name:name.slice(0,50),bio:(bio||'').slice(0,180),accent:/^#[0-9a-f]{6}$/i.test(accent||'')?accent:'#a78bfa'};
+ return {name:name.slice(0,50),bio:(bio||'').slice(0,180),accent:/^#[0-9a-f]{6}$/i.test(accent||'')?accent:'#a78bfa',links:getArtistLinks({links:{vk:params.get('vk'),telegram:params.get('telegram'),yandex:params.get('yandex')}})};
 }
 function saveArtistProfile(){localStorage.setItem('mop-artist-profile',JSON.stringify(artistProfile));renderArtistProfile();}
+function cleanExternalLink(value){const raw=String(value||'').trim();if(!raw)return '';try{const url=new URL(raw);return url.protocol==='https:'?url.href.slice(0,300):''}catch(error){return ''}}
+function getArtistLinks(source){const links=source?.links&&typeof source.links==='object'?source.links:{};return {vk:cleanExternalLink(links.vk),telegram:cleanExternalLink(links.telegram),yandex:cleanExternalLink(links.yandex)}}
+function renderArtistSocialLinks(){
+ const box=document.getElementById('artistSocialLinks');if(!box)return;box.replaceChildren();
+ const profile=sharedArtistProfile||artistProfile,labels={vk:'ВКонтакте',telegram:'Telegram',yandex:'Яндекс Музыка'};
+ Object.entries(getArtistLinks(profile)).forEach(([key,url])=>{if(!url)return;const link=document.createElement('a');link.href=url;link.target='_blank';link.rel='noopener noreferrer';link.textContent=labels[key];link.className='artist-social-link';box.appendChild(link)});
+ box.hidden=!box.childElementCount;
+}
 function renderArtistProfile(){
  const profile=sharedArtistProfile||artistProfile;
  const name=document.getElementById('artistName'),bio=document.getElementById('artistBio');
@@ -51,6 +59,7 @@ function renderArtistProfile(){
  const removePhoto=document.getElementById('removeArtistPhoto');if(removePhoto)removePhoto.hidden=!artistProfile.photo;
  const notice=document.getElementById('profileNotice');
  if(notice)notice.hidden=!sharedArtistProfile;
+ renderArtistSocialLinks();
 }
 
 async function chooseArtistPhoto(){
@@ -73,7 +82,7 @@ async function chooseArtistPhoto(){
 }
 
 async function shareArtistProfile(){
- const params=new URLSearchParams({artist:artistProfile.name||'Мой проект',bio:artistProfile.bio||'',accent:artistProfile.accent||'#a78bfa'});
+ const links=getArtistLinks(artistProfile);const params=new URLSearchParams({artist:artistProfile.name||'Мой проект',bio:artistProfile.bio||'',accent:artistProfile.accent||'#a78bfa'});Object.entries(links).forEach(([key,value])=>{if(value)params.set(key,value)});
  const url=location.origin+location.pathname+'?'+params.toString();
  const shareData={title:'MOP · '+(artistProfile.name||'Исполнитель'),text:'Карточка исполнителя на MOP. Фото профиля отображается только на устройстве владельца.',url};
  try{
@@ -587,7 +596,7 @@ async function importBackup(file){
    restored.forEach(t=>store.put(t));
    tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||new Error('Импорт отменён'));
   });
-  artistProfile={name:String(backup.artistProfile.name||'Мой проект').slice(0,50),bio:String(backup.artistProfile.bio||'').slice(0,180),accent:/^#[0-9a-f]{6}$/i.test(backup.artistProfile.accent||'')?backup.artistProfile.accent:'#a78bfa',...(typeof backup.artistProfile.photo==='string'&&backup.artistProfile.photo.startsWith('data:image/')?{photo:backup.artistProfile.photo}:{})};
+  artistProfile={name:String(backup.artistProfile.name||'Мой проект').slice(0,50),bio:String(backup.artistProfile.bio||'').slice(0,180),accent:/^#[0-9a-f]{6}$/i.test(backup.artistProfile.accent||'')?backup.artistProfile.accent:'#a78bfa',links:getArtistLinks(backup.artistProfile),...(typeof backup.artistProfile.photo==='string'&&backup.artistProfile.photo.startsWith('data:image/')?{photo:backup.artistProfile.photo}:{})};
   localStorage.setItem('mop-artist-profile',JSON.stringify(artistProfile));
   playlists=cleanPlaylists;savePlaylists();activePlaylistId='';
   audio.pause();audio.removeAttribute('src');audio.load();current=-1;
@@ -698,8 +707,8 @@ document.getElementById('playVisibleTracks')?.addEventListener('click',()=>{cons
 document.getElementById('shareArtistProfile')?.addEventListener('click',shareArtistProfile);
 document.getElementById('artistPhotoButton')?.addEventListener('click',chooseArtistPhoto);
 document.getElementById('removeArtistPhoto')?.addEventListener('click',()=>{if(!artistProfile.photo)return;delete artistProfile.photo;saveArtistProfile();});
-document.getElementById('saveArtistProfile')?.addEventListener('click',()=>{const name=document.getElementById('artistNameInput').value.trim();const bio=document.getElementById('artistBioInput').value.trim();const accent=document.getElementById('artistAccentInput').value;if(!name){alert('Укажи имя исполнителя.');return}artistProfile={...artistProfile,name,bio,accent};saveArtistProfile();document.getElementById('artistEditor').hidden=true;});
-document.getElementById('editArtistProfile')?.addEventListener('click',()=>{if(sharedArtistProfile)return;document.getElementById('artistNameInput').value=artistProfile.name||'';document.getElementById('artistBioInput').value=artistProfile.bio||'';document.getElementById('artistAccentInput').value=artistProfile.accent||'#a78bfa';document.getElementById('artistEditor').hidden=false;document.getElementById('artistNameInput').focus();});
+document.getElementById('saveArtistProfile')?.addEventListener('click',()=>{const name=document.getElementById('artistNameInput').value.trim();const bio=document.getElementById('artistBioInput').value.trim();const accent=document.getElementById('artistAccentInput').value;const rawLinks={vk:document.getElementById('artistVkInput').value,telegram:document.getElementById('artistTelegramInput').value,yandex:document.getElementById('artistYandexInput').value};const links=getArtistLinks({links:rawLinks});if(!name){alert('Укажи имя исполнителя.');return}for(const key of Object.keys(rawLinks)){if(rawLinks[key].trim()&&!links[key]){alert('Ссылки должны начинаться с https:// и быть корректными.');return}}artistProfile={...artistProfile,name,bio,accent,links};saveArtistProfile();document.getElementById('artistEditor').hidden=true;});
+document.getElementById('editArtistProfile')?.addEventListener('click',()=>{if(sharedArtistProfile)return;document.getElementById('artistNameInput').value=artistProfile.name||'';document.getElementById('artistBioInput').value=artistProfile.bio||'';document.getElementById('artistAccentInput').value=artistProfile.accent||'#a78bfa';const links=getArtistLinks(artistProfile);document.getElementById('artistVkInput').value=links.vk;document.getElementById('artistTelegramInput').value=links.telegram;document.getElementById('artistYandexInput').value=links.yandex;document.getElementById('artistEditor').hidden=false;document.getElementById('artistNameInput').focus();});
 document.getElementById('cancelArtistEdit')?.addEventListener('click',()=>{document.getElementById('artistEditor').hidden=true;});
 document.getElementById('createPlaylist')?.addEventListener('click',createPlaylist);
 document.getElementById('selectVisibleTracks')?.addEventListener('click',toggleVisibleSelection);
