@@ -27,3 +27,7 @@ Open the GitHub Pages site over HTTPS in a modern browser. On supported browsers
 - `app.js` — playback, library, playlists, and PWA install flow
 - `sw.js` — service worker and app-shell cache
 - `manifest.json` / `icon.svg` — PWA metadata and icon
+
+
+### Длительность композиций
+Длительность аудиофайлов определяется автоматически и сохраняется в локальной IndexedDB-библиотеке вместе с записью трека. При следующих запусках MOP уже известные значения не требуется повторно сканировать.
