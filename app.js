@@ -81,12 +81,19 @@ function loadPlaylists(){try{const value=JSON.parse(localStorage.getItem('mop-pl
 function savePlaylists(){localStorage.setItem('mop-playlists',JSON.stringify(playlists))}
 function renderPlaylistOptions(){const select=document.getElementById('playlistSelect');if(!select)return;select.replaceChildren(new Option('Все треки',''));playlists.forEach(p=>select.add(new Option(p.name,p.id)));select.value=activePlaylistId;const remove=document.getElementById('deletePlaylist');if(remove)remove.disabled=!activePlaylistId;}
 function setLibraryEmpty(message){const box=document.createElement('div');box.className='empty';box.textContent=message;tracksEl.replaceChildren(box);}
+function refreshArtistFilter(){
+ const select=document.getElementById('artistFilter');if(!select)return;
+ const selected=select.value;
+ const artists=[...new Set(tracks.map(t=>(t.artist||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'ru',{sensitivity:'base'}));
+ select.replaceChildren(new Option('Все исполнители',''),...artists.map(name=>new Option(name,name)));
+ if(artists.includes(selected))select.value=selected;
+}
 function getVisibleTrackEntries(){
  const query=(searchInput?.value||'').trim().toLocaleLowerCase('ru');
  const playlist=playlists.find(p=>p.id===activePlaylistId);
  const visible=tracks.map((track,index)=>({track,index})).filter(({track})=>{
   const searchable=[track.name,track.artist].filter(Boolean).join(' ').toLocaleLowerCase('ru');
-  return searchable.includes(query)&&(!showFavorites||track.favorite)&&(!playlist||playlist.trackIds.includes(track.id));
+  const artistFilter=document.getElementById('artistFilter')?.value||'';\n  return searchable.includes(query)&&(!artistFilter||(track.artist||'').trim()===artistFilter)&&(!showFavorites||track.favorite)&&(!playlist||playlist.trackIds.includes(track.id));
  });
  const sort=document.getElementById('trackSort')?.value||'newest';
  visible.sort((a,b)=>{
@@ -173,6 +180,7 @@ function updateLibraryStats(){
  });
 }
 function render(){
+ refreshArtistFilter();
  updateLibraryStats();
  const selected=playlists.find(p=>p.id===activePlaylistId);
  const countEl=document.getElementById('trackCount');
@@ -483,6 +491,7 @@ function sync(){
 }
 searchInput?.addEventListener('input',render);
 document.getElementById('trackSort')?.addEventListener('change',render);
+document.getElementById('artistFilter')?.addEventListener('change',render);
 document.getElementById('playVisibleTracks')?.addEventListener('click',()=>{const queue=getPlaybackOrder();if(queue.length)load(queue[0],true);else alert('В этом разделе пока нет композиций.');});
 document.getElementById('shareArtistProfile')?.addEventListener('click',shareArtistProfile);
 document.getElementById('artistPhotoButton')?.addEventListener('click',chooseArtistPhoto);
