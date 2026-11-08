@@ -8,10 +8,11 @@ const searchInput=document.getElementById('trackSearch');
 const durationEl=document.getElementById('duration'),elapsedEl=document.getElementById('elapsed');
 let tracks=[],current=-1,db=null,showFavorites=false,playlists=loadPlaylists(),activePlaylistId='',artistProfile=loadArtistProfile(),sharedArtistProfile=readSharedArtistProfile();
 const selectedTrackIds=new Set();
-let shuffleEnabled=false,repeatMode='off',shuffleOrder=[],shuffleSignature='';
-try{const playbackPrefs=JSON.parse(localStorage.getItem('mop-playback-options')||'{}');shuffleEnabled=!!playbackPrefs.shuffle;repeatMode=['off','all','one'].includes(playbackPrefs.repeat)?playbackPrefs.repeat:'off'}catch(error){}
-function savePlaybackOptions(){try{localStorage.setItem('mop-playback-options',JSON.stringify({shuffle:shuffleEnabled,repeat:repeatMode}))}catch(error){}}
+let shuffleEnabled=false,repeatMode='off',shuffleOrder=[],shuffleSignature='',playbackSpeed=1;
+try{const playbackPrefs=JSON.parse(localStorage.getItem('mop-playback-options')||'{}');shuffleEnabled=!!playbackPrefs.shuffle;repeatMode=['off','all','one'].includes(playbackPrefs.repeat)?playbackPrefs.repeat:'off';playbackSpeed=[.75,1,1.25,1.5,2].includes(Number(playbackPrefs.speed))?Number(playbackPrefs.speed):1}catch(error){}
+function savePlaybackOptions(){try{localStorage.setItem('mop-playback-options',JSON.stringify({shuffle:shuffleEnabled,repeat:repeatMode,speed:playbackSpeed}))}catch(error){}}
 function updatePlaybackOptions(){
+ const speedSelect=document.getElementById('playbackSpeed');if(speedSelect)speedSelect.value=String(playbackSpeed);
  const shuffle=document.getElementById('shuffleToggle'),repeat=document.getElementById('repeatToggle');
  if(shuffle){shuffle.classList.toggle('active',shuffleEnabled);shuffle.setAttribute('aria-pressed',String(shuffleEnabled));shuffle.textContent=shuffleEnabled?'🔀':'⇄';shuffle.title=shuffleEnabled?'Случайный порядок включён':'Включить случайный порядок';shuffle.setAttribute('aria-label',shuffle.title)}
  if(repeat){const labels={off:'↻',all:'↻',one:'↻¹'};repeat.textContent=labels[repeatMode];repeat.classList.toggle('active',repeatMode!=='off');repeat.title=repeatMode==='off'?'Повтор выключен':repeatMode==='all'?'Повтор всего списка':'Повтор одного трека';repeat.setAttribute('aria-label',repeat.title);repeat.setAttribute('aria-pressed',String(repeatMode!=='off'))}
@@ -619,7 +620,8 @@ audio.addEventListener('timeupdate',()=>{
 });
 seek.addEventListener('input',()=>{if(Number.isFinite(audio.duration)&&audio.duration>0)audio.currentTime=Number(seek.value)/1000*audio.duration});
 document.getElementById('volume').addEventListener('input',e=>audio.volume=Number(e.target.value));
-audio.volume=.8;
+audio.volume=.8;audio.playbackRate=playbackSpeed;
+document.getElementById('playbackSpeed')?.addEventListener('change',event=>{const value=Number(event.target.value);if(![.75,1,1.25,1.5,2].includes(value))return;playbackSpeed=value;audio.playbackRate=value;savePlaybackOptions()});
 (async()=>{
  renderPlaylistOptions();renderArtistProfile();updatePlaybackOptions();render();
  try{await openLibrary();await refreshLibrary()}
