@@ -487,7 +487,7 @@ function savePlaybackState(){
 }
 function load(i,autoplay){
  if(i<0||i>=tracks.length)return;
- current=i;rememberPlayedTrack(tracks[i].id);savePlaybackState();renderQueue();audio.pause();audio.src=tracks[i].url;seek.value=0;elapsedEl.textContent='0:00';durationEl.textContent='0:00';
+ current=i;savePlaybackState();renderQueue();audio.pause();audio.src=tracks[i].url;seek.value=0;elapsedEl.textContent='0:00';durationEl.textContent='0:00';
  const playerCover=document.querySelector('.player .cover');
  if(playerCover){playerCover.replaceChildren();if(tracks[i].coverUrl){const image=document.createElement('img');image.src=tracks[i].coverUrl;image.alt='Обложка '+tracks[i].name;playerCover.appendChild(image)}else playerCover.textContent='M'}
  document.getElementById('currentTitle').textContent=tracks[i].name;
@@ -645,7 +645,7 @@ document.getElementById('repeatToggle')?.addEventListener('click',()=>{
  repeatMode=repeatMode==='off'?'all':repeatMode==='all'?'one':'off';savePlaybackOptions();updatePlaybackOptions();
 });
 document.getElementById('prev').onclick=()=>{if(audio.currentTime>3){audio.currentTime=0;return}stepTrack(-1)};
-audio.addEventListener('play',sync);audio.addEventListener('pause',sync);
+audio.addEventListener('play',()=>{if(current>=0){rememberPlayedTrack(tracks[current].id);if(showPlayed)render()}sync()});audio.addEventListener('pause',sync);
 audio.addEventListener('ended',()=>{savePlaybackState();stepTrack(1)});
 window.addEventListener('pagehide',savePlaybackState);
 audio.addEventListener('error',()=>{if(audio.currentSrc){document.getElementById('currentArtist').textContent='Не удалось воспроизвести файл. Формат может не поддерживаться браузером.';playBtn.textContent='▶';playBtn.setAttribute('aria-pressed','false')}});
