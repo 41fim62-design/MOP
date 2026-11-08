@@ -101,16 +101,32 @@ function render(){
   const favorite=document.createElement('button');favorite.className='track-favorite';favorite.type='button';favorite.setAttribute('aria-label',t.favorite?'Убрать из избранного':'Добавить в избранное');favorite.title=favorite.getAttribute('aria-label');favorite.textContent=t.favorite?'★':'☆';
   const add=document.createElement('button');add.className='track-add-playlist';add.type='button';add.setAttribute('aria-label','Добавить или убрать из плейлиста');add.title=add.getAttribute('aria-label');add.textContent=inPlaylist?'✓':'＋';
   const play=document.createElement('button');play.className='track-play';play.type='button';play.setAttribute('aria-label','Играть');play.textContent='▶';
+  const shareBtn=document.createElement('button');shareBtn.className='track-share';shareBtn.type='button';shareBtn.setAttribute('aria-label','Поделиться аудиофайлом');shareBtn.title='Поделиться треком';shareBtn.textContent='↗';
   const exportBtn=document.createElement('button');exportBtn.className='track-export';exportBtn.type='button';exportBtn.setAttribute('aria-label','Скачать копию трека');exportBtn.title='Скачать копию';exportBtn.textContent='↓';
   const remove=document.createElement('button');remove.className='track-delete';remove.type='button';remove.setAttribute('aria-label','Удалить трек');remove.title='Удалить трек';remove.textContent='×';
-  row.append(art,info,favorite,add,exportBtn,play,remove);
+  row.append(art,info,favorite,add,shareBtn,exportBtn,play,remove);
   row.onclick=()=>load(i,true);
   favorite.onclick=e=>{e.stopPropagation();toggleFavorite(i)};
   add.onclick=e=>{e.stopPropagation();addToPlaylist(i)};
+  shareBtn.onclick=e=>{e.stopPropagation();shareTrack(i)};
   exportBtn.onclick=e=>{e.stopPropagation();exportTrack(i)};
   remove.onclick=e=>{e.stopPropagation();removeTrack(i)};
   tracksEl.appendChild(row);
  });
+}
+async function shareTrack(index){
+ const track=tracks[index];if(!track?.blob)return;
+ const ext=track.blob.type.split('/')[1]?.replace(/[^a-z0-9]/gi,'')||'audio';
+ const safeName=(track.name||'MOP-track').replace(/[\\/:*?"<>|]+/g,'_').slice(0,100);
+ try{
+  const file=new File([track.blob],safeName+'.'+ext,{type:track.blob.type||'application/octet-stream'});
+  if(navigator.share&&navigator.canShare?.({files:[file]})){
+   await navigator.share({title:track.name,text:'Трек из MOP · Music of People',files:[file]});
+   return;
+  }
+ }catch(error){if(error.name==='AbortError')return}
+ exportTrack(index);
+ alert('Прямая отправка файла не поддерживается этим браузером. Трек скачан, его можно прикрепить к сообщению.');
 }
 function exportTrack(index){
  const track=tracks[index];if(!track?.blob)return;
