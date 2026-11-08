@@ -31,7 +31,18 @@ function readSharedArtistProfile(){
  if(!name)return null;
  return {name:name.slice(0,50),bio:(bio||'').slice(0,180),accent:/^#[0-9a-f]{6}$/i.test(accent||'')?accent:'#a78bfa',links:getArtistLinks({links:{vk:params.get('vk'),telegram:params.get('telegram'),yandex:params.get('yandex')}})};
 }
-function saveArtistProfile(){localStorage.setItem('mop-artist-profile',JSON.stringify(artistProfile));renderArtistProfile();}
+function saveArtistProfile(){localStorage.setItem('mop-artist-profile',JSON.stringify(artistProfile));
+  const social=backup.social&&typeof backup.social==='object'?backup.social:{};
+  const safeFollowed=Array.isArray(social.followedArtists)?[...new Set(social.followedArtists.filter(x=>typeof x==='string').map(x=>x.slice(0,100)))].slice(0,500):[];
+  const safeSubscriptions=Array.isArray(social.artistSubscriptions)?social.artistSubscriptions.filter(item=>item&&typeof item.key==='string'&&typeof item.name==='string'&&typeof item.url==='string'&&/^https:\/\//i.test(item.url)).slice(0,300).map(item=>({key:item.key.slice(0,400),name:item.name.slice(0,50),bio:String(item.bio||'').slice(0,180),accent:/^#[0-9a-f]{6}$/i.test(item.accent||'')?item.accent:'#a78bfa',links:getArtistLinks(item),url:item.url.slice(0,2000),addedAt:String(item.addedAt||'').slice(0,40)})):[];
+  const safePosts=Array.isArray(social.artistPosts)?social.artistPosts.filter(item=>item&&typeof item.id==='string'&&typeof item.text==='string').slice(0,30).map(item=>({id:item.id.slice(0,80),text:item.text.slice(0,500),createdAt:String(item.createdAt||'').slice(0,40),track:String(item.track||'').slice(0,180),album:String(item.album||'').slice(0,120)})):[];
+  const safeInbox=Array.isArray(social.artistInbox)?social.artistInbox.filter(item=>item&&typeof item.id==='string'&&typeof item.text==='string').slice(0,100).map(item=>({id:item.id.slice(0,80),text:item.text.slice(0,500),artist:String(item.artist||'Слушатель').slice(0,50),createdAt:String(item.createdAt||'').slice(0,40),postText:String(item.postText||'').slice(0,500),savedAt:String(item.savedAt||'').slice(0,40)})):[];
+  localStorage.setItem('mop-followed-artists',JSON.stringify(safeFollowed));
+  localStorage.setItem('mop-artist-subscriptions',JSON.stringify(safeSubscriptions));
+  localStorage.setItem('mop-artist-posts',JSON.stringify(safePosts));
+  localStorage.setItem('mop-artist-inbox',JSON.stringify(safeInbox));
+  followedArtists=safeFollowed;
+renderArtistProfile();}
 function cleanExternalLink(value){const raw=String(value||'').trim();if(!raw)return '';try{const url=new URL(raw);return url.protocol==='https:'?url.href.slice(0,300):''}catch(error){return ''}}
 function getArtistLinks(source){const links=source?.links&&typeof source.links==='object'?source.links:{};return {vk:cleanExternalLink(links.vk),telegram:cleanExternalLink(links.telegram),yandex:cleanExternalLink(links.yandex)}}
 function loadArtistSubscriptions(){try{const value=JSON.parse(localStorage.getItem('mop-artist-subscriptions')||'[]');return Array.isArray(value)?value.filter(item=>item&&typeof item.key==='string'&&typeof item.name==='string'&&typeof item.url==='string').slice(0,300):[]}catch(error){return []}}
@@ -589,8 +600,8 @@ function downloadJson(data,name){
 async function exportBackup(){
  if(!db)await openLibrary();
  const saved=await readTracks();
- if(!saved.length&&!playlists.length){alert('Пока нечего сохранять. Сначала добавь музыку или создай плейлист.');return}
- if(!confirm('Создать полную резервную копию профиля, плейлистов и аудиофайлов? Большая музыкальная библиотека может занять много памяти и времени.'))return;
+ const socialBackup={followedArtists:loadFollowedArtists(),artistSubscriptions:loadArtistSubscriptions(),artistPosts:loadArtistPosts(),artistInbox:loadArtistInbox()};\n if(!saved.length&&!playlists.length&&!socialBackup.followedArtists.length&&!socialBackup.artistSubscriptions.length&&!socialBackup.artistPosts.length&&!socialBackup.artistInbox.length){alert('Пока нечего сохранять. Сначала добавь музыку, создай плейлист или сохрани социальные данные.');return}
+ if(!confirm('Создать полную резервную копию профиля, музыки, плейлистов, подписок, публикаций и откликов? Большая музыкальная библиотека может занять много памяти и времени.'))return;
  const button=document.getElementById('exportBackup');
  if(button){button.disabled=true;button.textContent='Готовим копию…'}
  try{
@@ -599,7 +610,7 @@ async function exportBackup(){
    const sourceBlob=track.blob?.type?.startsWith('audio/')?track.blob:new Blob([track.blob],{type:guessAudioMime(track.name)});
    backupTracks.push({id:track.id,name:track.name||'Без названия',artist:track.artist||'',type:sourceBlob.type,favorite:!!track.favorite,album:track.album||'',duration:Number.isFinite(track.duration)?track.duration:null,data:await blobToDataUrl(sourceBlob),cover:track.cover instanceof Blob?await blobToDataUrl(track.cover):null,lyrics:String(track.lyrics||'').slice(0,20000)});
   }
-  downloadJson({format:'MOP_BACKUP',version:1,createdAt:new Date().toISOString(),artistProfile,playlists,tracks:backupTracks},'MOP-backup-'+new Date().toISOString().slice(0,10)+'.json');
+  downloadJson({format:'MOP_BACKUP',version:1,createdAt:new Date().toISOString(),artistProfile,playlists,tracks:backupTracks,social:socialBackup},'MOP-backup-'+new Date().toISOString().slice(0,10)+'.json');
   alert('Резервная копия создана. Сохрани JSON-файл отдельно от телефона, чтобы не потерять музыку.');
  }catch(error){alert('Не удалось создать копию. Возможно, библиотека слишком большая или не хватает памяти устройства.')}
  finally{if(button){button.disabled=false;button.textContent='↓ Резервная копия'}}
@@ -610,7 +621,7 @@ async function importBackup(file){
  try{
   const backup=JSON.parse(await file.text());
   if(!backup||backup.format!=='MOP_BACKUP'||backup.version!==1||!Array.isArray(backup.tracks)||!Array.isArray(backup.playlists)||!backup.artistProfile||typeof backup.artistProfile!=='object')throw new Error('Формат файла не распознан');
-  if(!confirm('Импорт заменит текущую музыку, плейлисты и профиль на данные из резервной копии. Продолжить?'))return;
+  if(!confirm('Импорт заменит текущую музыку, плейлисты, профиль и социальные данные на данные из резервной копии. Продолжить?'))return;
   const restored=backup.tracks.map((t,index)=>{
    const blob=dataUrlToBlob(t.data);
    const record={name:String(t.name||'Без названия').slice(0,180),artist:String(t.artist||'').slice(0,100),album:String(t.album||'').slice(0,120),...(Number.isFinite(t.duration)&&t.duration>0?{duration:t.duration}:{}),blob,type:blob.type||String(t.type||''),favorite:!!t.favorite,lyrics:String(t.lyrics||'').slice(0,20000)};
@@ -636,7 +647,7 @@ async function importBackup(file){
   playlists=cleanPlaylists;savePlaylists();activePlaylistId='';
   audio.pause();audio.removeAttribute('src');audio.load();current=-1;
   renderPlaylistOptions();await refreshLibrary();
-  alert('Резервная копия восстановлена. Музыка, профиль и плейлисты загружены.');
+  alert('Резервная копия восстановлена: музыка, профиль, плейлисты, подписки, публикации и отклики загружены.');
  }catch(error){alert('Не удалось импортировать копию: '+(error.message||'проверь файл и свободную память'))}
 }
 
