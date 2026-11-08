@@ -29,15 +29,39 @@ function readTracks(){
   request.onerror=()=>reject(request.error);
  });
 }
+function trackWord(n){
+ const mod10=n%10,mod100=n%100;
+ if(mod10===1&&mod100!==11)return 'трек';
+ if(mod10>=2&&mod10<=4&&(mod100<12||mod100>14))return 'трека';
+ return 'треков';
+}
 function render(){
- document.getElementById('trackCount').textContent=tracks.length+' треков';
+ document.getElementById('trackCount').textContent=tracks.length+' '+trackWord(tracks.length);
  if(!tracks.length){tracksEl.innerHTML='<div class="empty">Здесь появятся твои треки.<br>Нажми «Загрузить музыку», чтобы добавить аудио с устройства.</div>';return}
  tracksEl.innerHTML='';
  tracks.forEach((t,i)=>{
   const row=document.createElement('div');row.className='track'+(i===current?' active':'');
-  row.innerHTML='<div class="track-art">M</div><div class="track-info"><b></b><span>Сохранено на устройстве</span></div><button aria-label="Играть">▶</button>';
-  row.querySelector('b').textContent=t.name;row.onclick=()=>load(i,true);tracksEl.appendChild(row);
+  row.innerHTML='<div class="track-art">M</div><div class="track-info"><b></b><span>Сохранено на устройстве</span></div><button class="track-play" aria-label="Играть">▶</button><button class="track-delete" aria-label="Удалить трек" title="Удалить трек">×</button>';
+  row.querySelector('b').textContent=t.name;
+  row.onclick=()=>load(i,true);
+  row.querySelector('.track-delete').onclick=e=>{e.stopPropagation();removeTrack(i)};
+  tracksEl.appendChild(row);
  });
+}
+async function removeTrack(index){
+ const track=tracks[index];
+ if(!track||!db)return;
+ if(!confirm('Удалить «'+track.name+'» из библиотеки этого устройства?'))return;
+ try{
+  await new Promise((resolve,reject)=>{
+   const tx=db.transaction('tracks','readwrite');
+   tx.objectStore('tracks').delete(track.id);
+   tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);
+  });
+  if(index===current){audio.pause();audio.removeAttribute('src');audio.load()}
+  else if(index<current)current--;
+  await refreshLibrary();
+ }catch(error){alert('Не удалось удалить трек. Попробуй ещё раз.')}
 }
 function load(i,autoplay){
  if(i<0||i>=tracks.length)return;
