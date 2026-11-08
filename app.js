@@ -103,6 +103,18 @@ function refreshAlbumFilter(){
  select.value=albums.includes(selected)?selected:'';
 }
 
+function openArtistDetail(name){
+ const group=tracks.filter(t=>(t.artist||artistProfile.name||'Мой проект').trim().toLocaleLowerCase('ru')===name.toLocaleLowerCase('ru'));
+ const section=document.getElementById('artistDetail'),avatar=document.getElementById('artistDetailAvatar'),title=document.getElementById('artistDetailName'),bio=document.getElementById('artistDetailBio'),total=document.getElementById('artistDetailCount'),list=document.getElementById('artistDetailTracks'),follow=document.getElementById('artistDetailFollow');
+ if(!section||!list||!group.length)return;
+ section.hidden=false;title.textContent=name;bio.textContent=name===artistProfile.name&&artistProfile.bio?artistProfile.bio:'Музыка исполнителя в локальной библиотеке MOP.';total.textContent=group.length+' '+trackWord(group.length);
+ avatar.replaceChildren();const photo=name===artistProfile.name?artistProfile.photo:null,cover=group.find(t=>t.coverUrl)?.coverUrl;
+ if(photo||cover){const image=document.createElement('img');image.src=photo||cover;image.alt='Фото '+name;avatar.appendChild(image)}else avatar.textContent=name.charAt(0).toUpperCase();
+ const isFollowed=followedArtists.includes(name);follow.textContent=isFollowed?'♥ Вы подписаны':'＋ Подписаться';follow.setAttribute('aria-pressed',String(isFollowed));follow.onclick=()=>{toggleFollowArtist(name);openArtistDetail(name)};
+ list.replaceChildren();
+ group.forEach(track=>{const row=document.createElement('button');row.type='button';row.className='artist-detail-track';const nameEl=document.createElement('b');nameEl.textContent=track.name;const meta=document.createElement('span');meta.textContent=(track.album?track.album+' · ':'')+(Number.isFinite(track.duration)?fmt(track.duration):'Композиция');row.append(nameEl,meta);row.onclick=()=>load(tracks.indexOf(track),true);list.appendChild(row)});
+ section.scrollIntoView({behavior:'smooth',block:'start'});
+}
 function renderArtistCollection(){
  const section=document.getElementById('artistCollection'),cards=document.getElementById('artistCards'),count=document.getElementById('artistCollectionCount'),toggle=document.getElementById('followedArtistsFilter');if(!section||!cards)return;
  const groups=new Map();tracks.forEach(track=>{const name=(track.artist||artistProfile.name||'Мой проект').trim();if(!name)return;const key=name.toLocaleLowerCase('ru');if(!groups.has(key))groups.set(key,{name,tracks:[],cover:null});const g=groups.get(key);g.tracks.push(track);if(!g.cover&&track.coverUrl)g.cover=track.coverUrl});
@@ -114,9 +126,10 @@ function renderArtistCollection(){
  if(g.name===artistProfile.name&&artistProfile.photo){const image=document.createElement('img');image.src=artistProfile.photo;image.alt='Фото '+g.name;avatar.appendChild(image)}else if(g.cover){const image=document.createElement('img');image.src=g.cover;image.alt='Обложка '+g.name;avatar.appendChild(image)}else avatar.textContent=g.name.charAt(0).toUpperCase();
  const title=document.createElement('b');title.className='artist-card-name';title.textContent=g.name;const total=document.createElement('span');total.className='artist-card-total';total.textContent=g.tracks.length+' '+trackWord(g.tracks.length);const actions=document.createElement('div');actions.className='artist-card-actions';
  const open=document.createElement('button');open.type='button';open.textContent='Музыка';open.setAttribute('aria-label','Показать музыку исполнителя '+g.name);open.onclick=()=>{const select=document.getElementById('artistFilter');if(select)select.value=g.name;const album=document.getElementById('albumFilter');if(album)album.value='';const search=document.getElementById('trackSearch');if(search)search.value='';showFavorites=false;showRecent=false;showPlayed=false;activePlaylistId='';render()};
- const play=document.createElement('button');play.type='button';play.textContent='▶';play.setAttribute('aria-label','Слушать исполнителя '+g.name);play.onclick=()=>{open.click();const first=getVisibleTrackEntries()[0];if(first)load(first.index,true)};
+ const profile=document.createElement('button');profile.type='button';profile.textContent='Профиль';profile.setAttribute('aria-label','Открыть профиль исполнителя '+g.name);profile.onclick=()=>openArtistDetail(g.name);
+  const play=document.createElement('button');play.type='button';play.textContent='▶';play.setAttribute('aria-label','Слушать исполнителя '+g.name);play.onclick=()=>{open.click();const first=getVisibleTrackEntries()[0];if(first)load(first.index,true)};
  const follow=document.createElement('button');follow.type='button';const yes=followedArtists.includes(g.name);follow.className='artist-follow'+(yes?' is-followed':'');follow.textContent=yes?'♥':'＋';follow.setAttribute('aria-pressed',String(yes));follow.setAttribute('aria-label',(yes?'Отписаться от ':'Подписаться на ')+g.name);follow.title=follow.getAttribute('aria-label');follow.onclick=()=>toggleFollowArtist(g.name);
- actions.append(open,play,follow);card.append(avatar,title,total,actions);cards.appendChild(card)});
+ actions.append(profile,open,play,follow);card.append(avatar,title,total,actions);cards.appendChild(card)});
 }
 function renderAlbumCollection(){
  const section=document.getElementById('albumCollection'),cards=document.getElementById('albumCards'),count=document.getElementById('albumCollectionCount');
@@ -655,6 +668,7 @@ document.getElementById('trackSort')?.addEventListener('change',render);
 document.getElementById('albumFilter')?.addEventListener('change',render);
 document.getElementById('artistFilter')?.addEventListener('change',render);
 document.getElementById('followedArtistsFilter')?.addEventListener('click',()=>{showFollowedArtists=!showFollowedArtists;renderArtistCollection()});
+document.getElementById('artistDetailBack')?.addEventListener('click',()=>{const section=document.getElementById('artistDetail');if(section)section.hidden=true;document.getElementById('artistCollection')?.scrollIntoView({behavior:'smooth',block:'start'})});
 document.getElementById('recentTracksFilter')?.addEventListener('click',()=>{showRecent=!showRecent;const button=document.getElementById('recentTracksFilter');button?.classList.toggle('active',showRecent);button?.setAttribute('aria-pressed',String(showRecent));render()});
 document.getElementById('playedTracksFilter')?.addEventListener('click',()=>{showPlayed=!showPlayed;const button=document.getElementById('playedTracksFilter');button?.classList.toggle('active',showPlayed);button?.setAttribute('aria-pressed',String(showPlayed));render()});
 document.getElementById('clearPlayHistory')?.addEventListener('click',()=>{if(!playedTrackIds.length){alert('История прослушивания уже пуста.');return}if(!confirm('Очистить историю прослушивания?'))return;playedTrackIds=[];try{localStorage.removeItem('mop-play-history')}catch(error){}render()});
