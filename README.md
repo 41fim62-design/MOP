@@ -53,3 +53,5 @@ Open the GitHub Pages site over HTTPS in a modern browser. On supported browsers
 - Shared post interactions: local emoji reaction counters and shareable reply links. Reactions are stored only in the reacting browser; replies are generated as separate links that the listener sends to the author. There is no automatic cross-user comment feed or server synchronization.
 
 - Local artist inbox: when an artist opens a listener's reply link, they can save that reply into a local inbox on their device. Inbox supports up to 100 saved replies and individual deletion. This is manual link-based delivery, not automatic server messaging.
+
+- Full backup now also includes followed artists, shared-profile subscriptions, local artist publications and saved listener replies. Import restores these local social records with validation and size limits. Older version-1 backups without the optional social object remain compatible.
