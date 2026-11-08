@@ -11,9 +11,9 @@ const selectedTrackIds=new Set();
 function loadArtistProfile(){try{return JSON.parse(localStorage.getItem('mop-artist-profile'))||{name:'Мой проект',bio:'Независимый исполнитель на MOP'}}catch(e){return {name:'Мой проект',bio:'Независимый исполнитель на MOP'}}}
 function readSharedArtistProfile(){
  const params=new URLSearchParams(location.search);
- const name=params.get('artist'),bio=params.get('bio');
+ const name=params.get('artist'),bio=params.get('bio'),accent=params.get('accent');
  if(!name)return null;
- return {name:name.slice(0,50),bio:(bio||'').slice(0,180)};
+ return {name:name.slice(0,50),bio:(bio||'').slice(0,180),accent:/^#[0-9a-f]{6}$/i.test(accent||'')?accent:'#a78bfa'};
 }
 function saveArtistProfile(){localStorage.setItem('mop-artist-profile',JSON.stringify(artistProfile));renderArtistProfile();}
 function renderArtistProfile(){
@@ -28,13 +28,35 @@ function renderArtistProfile(){
  if(share)share.hidden=!!sharedArtistProfile;
  const kicker=document.querySelector('.artist-kicker');
  if(kicker)kicker.textContent=sharedArtistProfile?'КАРТОЧКА ИСПОЛНИТЕЛЯ ПО ССЫЛКЕ':'ПРОФИЛЬ ИСПОЛНИТЕЛЯ';
+ const avatar=document.getElementById('artistAvatar');
+ if(avatar){avatar.replaceChildren();const photo=sharedArtistProfile?null:artistProfile.photo;if(photo){const image=document.createElement('img');image.src=photo;image.alt='Фото исполнителя';avatar.appendChild(image)}else avatar.textContent=(profile.name||'M').trim().charAt(0).toUpperCase()||'M';avatar.style.setProperty('--artist-accent',sharedArtistProfile?.accent||artistProfile.accent||'#a78bfa');}
+ const card=document.getElementById('artistCard');if(card)card.style.setProperty('--artist-accent',sharedArtistProfile?.accent||artistProfile.accent||'#a78bfa');
  const notice=document.getElementById('profileNotice');
  if(notice)notice.hidden=!sharedArtistProfile;
 }
+
+async function chooseArtistPhoto(){
+ const picker=document.createElement('input');picker.type='file';picker.accept='image/*';picker.hidden=true;document.body.appendChild(picker);
+ picker.onchange=async()=>{
+  const file=picker.files?.[0];picker.remove();if(!file)return;
+  try{
+   if(!file.type.startsWith('image/'))throw new Error('Выбери изображение.');
+   if(file.size>12*1024*1024)throw new Error('Фото должно быть меньше 12 МБ.');
+   const bitmap=await createImageBitmap(file),size=512,scale=Math.min(1,size/Math.max(bitmap.width,bitmap.height));
+   const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(bitmap.width*scale));canvas.height=Math.max(1,Math.round(bitmap.height*scale));
+   canvas.getContext('2d').drawImage(bitmap,0,0,canvas.width,canvas.height);bitmap.close();
+   const photo=canvas.toDataURL('image/jpeg',.82);
+   artistProfile={...artistProfile,photo};saveArtistProfile();
+   alert('Фото профиля сохранено на этом устройстве. Для общей публикации потребуется серверное хранилище.');
+  }catch(error){alert(error.message||'Не удалось сохранить фото.')}
+ };
+ picker.click();
+}
+
 async function shareArtistProfile(){
- const params=new URLSearchParams({artist:artistProfile.name||'Мой проект',bio:artistProfile.bio||''});
+ const params=new URLSearchParams({artist:artistProfile.name||'Мой проект',bio:artistProfile.bio||'',accent:artistProfile.accent||'#a78bfa'});
  const url=location.origin+location.pathname+'?'+params.toString();
- const shareData={title:'MOP · '+(artistProfile.name||'Исполнитель'),text:'Карточка исполнителя на MOP',url};
+ const shareData={title:'MOP · '+(artistProfile.name||'Исполнитель'),text:'Карточка исполнителя на MOP. Фото профиля отображается только на устройстве владельца.',url};
  try{
   if(navigator.share){await navigator.share(shareData);return}
   if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(url);alert('Ссылка на карточку скопирована. Отправь её друзьям.');return}
@@ -416,8 +438,9 @@ function sync(){
 searchInput?.addEventListener('input',render);
 document.getElementById('trackSort')?.addEventListener('change',render);
 document.getElementById('shareArtistProfile')?.addEventListener('click',shareArtistProfile);
-document.getElementById('saveArtistProfile')?.addEventListener('click',()=>{const name=document.getElementById('artistNameInput').value.trim();const bio=document.getElementById('artistBioInput').value.trim();if(!name){alert('Укажи имя исполнителя.');return}artistProfile={name,bio};saveArtistProfile();document.getElementById('artistEditor').hidden=true;});
-document.getElementById('editArtistProfile')?.addEventListener('click',()=>{if(sharedArtistProfile)return;document.getElementById('artistNameInput').value=artistProfile.name||'';document.getElementById('artistBioInput').value=artistProfile.bio||'';document.getElementById('artistEditor').hidden=false;document.getElementById('artistNameInput').focus();});
+document.getElementById('artistPhotoButton')?.addEventListener('click',chooseArtistPhoto);
+document.getElementById('saveArtistProfile')?.addEventListener('click',()=>{const name=document.getElementById('artistNameInput').value.trim();const bio=document.getElementById('artistBioInput').value.trim();const accent=document.getElementById('artistAccentInput').value;if(!name){alert('Укажи имя исполнителя.');return}artistProfile={...artistProfile,name,bio,accent};saveArtistProfile();document.getElementById('artistEditor').hidden=true;});
+document.getElementById('editArtistProfile')?.addEventListener('click',()=>{if(sharedArtistProfile)return;document.getElementById('artistNameInput').value=artistProfile.name||'';document.getElementById('artistBioInput').value=artistProfile.bio||'';document.getElementById('artistAccentInput').value=artistProfile.accent||'#a78bfa';document.getElementById('artistEditor').hidden=false;document.getElementById('artistNameInput').focus();});
 document.getElementById('cancelArtistEdit')?.addEventListener('click',()=>{document.getElementById('artistEditor').hidden=true;});
 document.getElementById('createPlaylist')?.addEventListener('click',createPlaylist);
 document.getElementById('selectVisibleTracks')?.addEventListener('click',toggleVisibleSelection);
