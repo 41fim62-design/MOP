@@ -517,8 +517,18 @@ function load(i,autoplay){
  if(playerCover){playerCover.replaceChildren();if(tracks[i].coverUrl){const image=document.createElement('img');image.src=tracks[i].coverUrl;image.alt='Обложка '+tracks[i].name;playerCover.appendChild(image)}else playerCover.textContent='M'}
  document.getElementById('currentTitle').textContent=tracks[i].name;
  document.getElementById('currentArtist').textContent=tracks[i].artist||artistProfile.name||'Мой проект';
- render();if(autoplay)audio.play().catch(()=>{});sync();
+ renderCurrentLyrics();render();if(autoplay)audio.play().catch(()=>{});sync();
 }
+function renderCurrentLyrics(){
+ const track=current>=0?tracks[current]:null,panel=document.getElementById('currentLyricsPanel'),text=document.getElementById('currentLyricsText'),toggle=document.getElementById('currentLyricsToggle'),edit=document.getElementById('currentLyricsEdit');
+ if(!panel||!text||!toggle)return;
+ const lyrics=String(track?.lyrics||'').trim();
+ text.textContent=lyrics||'Для этой композиции пока нет текста. Добавь его через кнопку ≡ в каталоге.';
+ text.classList.toggle('is-empty',!lyrics);
+ toggle.disabled=!track;toggle.setAttribute('aria-expanded',String(!panel.hidden));toggle.textContent=panel.hidden?'Текст песни':'Скрыть текст';
+ if(edit)edit.disabled=!track;
+}
+function toggleCurrentLyrics(){const panel=document.getElementById('currentLyricsPanel');if(!panel||current<0)return;panel.hidden=!panel.hidden;renderCurrentLyrics();}
 function sync(){
  const active=!audio.paused&&!audio.ended;
  const progress=audio.duration?Math.min(1,Math.max(0,audio.currentTime/audio.duration)):0;
@@ -715,6 +725,8 @@ window.addEventListener('appinstalled',()=>{
 });
 if(navigator.storage?.persist)navigator.storage.persist().catch(()=>{});
 
+document.getElementById('currentLyricsToggle')?.addEventListener('click',toggleCurrentLyrics);
+document.getElementById('currentLyricsEdit')?.addEventListener('click',()=>{if(current>=0)editTrackLyrics(current)});
 document.getElementById('queueToggle')?.addEventListener('click',()=>{const panel=document.getElementById('queuePanel'),button=document.getElementById('queueToggle');if(!panel||!button)return;panel.hidden=!panel.hidden;button.setAttribute('aria-expanded',String(!panel.hidden));renderQueue()});
 
 document.getElementById('cancelTrackEdit')?.addEventListener('click',()=>document.getElementById('trackEditor')?.close());
@@ -729,5 +741,5 @@ document.getElementById('cancelTrackLyrics')?.addEventListener('click',()=>docum
 document.getElementById('trackLyricsForm')?.addEventListener('submit',async event=>{
  event.preventDefault();const dialog=document.getElementById('trackLyricsEditor'),id=Number(document.getElementById('lyricsTrackId').value),track=tracks.find(item=>String(item.id)===String(id)),lyrics=document.getElementById('trackLyricsText').value.slice(0,20000),error=document.getElementById('trackLyricsError'),save=event.submitter;
  if(!track||!db){error.textContent='Библиотека пока недоступна.';return}if(save)save.disabled=true;
- try{await new Promise((resolve,reject)=>{const tx=db.transaction('tracks','readwrite'),store=tx.objectStore('tracks'),request=store.get(track.id);request.onsuccess=()=>{if(!request.result){reject(new Error('Трек не найден'));return}request.result.lyrics=lyrics;store.put(request.result)};request.onerror=()=>reject(request.error);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||new Error('Операция отменена'))});track.lyrics=lyrics;dialog.close()}catch(err){error.textContent='Не удалось сохранить текст. Попробуй ещё раз.'}finally{if(save)save.disabled=false}
+ try{await new Promise((resolve,reject)=>{const tx=db.transaction('tracks','readwrite'),store=tx.objectStore('tracks'),request=store.get(track.id);request.onsuccess=()=>{if(!request.result){reject(new Error('Трек не найден'));return}request.result.lyrics=lyrics;store.put(request.result)};request.onerror=()=>reject(request.error);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||new Error('Операция отменена'))});track.lyrics=lyrics;if(current>=0&&tracks[current]?.id===track.id)renderCurrentLyrics();dialog.close()}catch(err){error.textContent='Не удалось сохранить текст. Попробуй ещё раз.'}finally{if(save)save.disabled=false}
 });
