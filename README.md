@@ -59,3 +59,6 @@ Open the GitHub Pages site over HTTPS in a modern browser. On supported browsers
 - Artist publications support one pinned announcement. Pinning moves it to the top of the local feed; pin state is included in backup/restore. This remains device-local until a shared backend exists.
 
 - Artist posts can now be edited in place (up to 500 characters); edits keep the post ID and pin state, and shared links can be regenerated with the updated text. The composer displays a live character count.
+
+
+- Artist inbox now supports searching saved listener replies by author, date, message text, or original post, and exporting all saved replies as a UTF-8 CSV file for spreadsheet apps. The inbox remains local to the current browser.
