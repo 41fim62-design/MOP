@@ -7,6 +7,7 @@ const seek=document.getElementById('seek');
 const searchInput=document.getElementById('trackSearch');
 const durationEl=document.getElementById('duration'),elapsedEl=document.getElementById('elapsed');
 let tracks=[],current=-1,db=null,showFavorites=false,playlists=loadPlaylists(),activePlaylistId='',artistProfile=loadArtistProfile(),sharedArtistProfile=readSharedArtistProfile();
+const selectedTrackIds=new Set();
 function loadArtistProfile(){try{return JSON.parse(localStorage.getItem('mop-artist-profile'))||{name:'Мой проект',bio:'Независимый исполнитель на MOP'}}catch(e){return {name:'Мой проект',bio:'Независимый исполнитель на MOP'}}}
 function readSharedArtistProfile(){
  const params=new URLSearchParams(location.search);
@@ -104,7 +105,8 @@ function render(){
  const selected=playlists.find(p=>p.id===activePlaylistId);
  const countEl=document.getElementById('trackCount');
  if(countEl)countEl.textContent=tracks.length+' '+trackWord(tracks.length)+(selected?' · в «'+selected.name+'»: '+selected.trackIds.length:'');
- if(!tracks.length){setLibraryEmpty('Здесь появятся твои треки. Нажми «Загрузить музыку», чтобы добавить аудио с устройства.');return}
+ updateBulkTools([]);
+ if(!tracks.length){selectedTrackIds.clear();setLibraryEmpty('Здесь появятся твои треки. Нажми «Загрузить музыку», чтобы добавить аудио с устройства.');return}
  tracksEl.innerHTML='';
  const query=(searchInput?.value||'').trim().toLocaleLowerCase('ru');
  const activePlaylist=playlists.find(p=>p.id===activePlaylistId);
@@ -119,12 +121,16 @@ function render(){
   return (Number(b.track.id)||b.index)-(Number(a.track.id)||a.index);
  });
  if(countEl&&query)countEl.textContent+=' · найдено: '+visible.length;
+ updateBulkTools(visible.map(item=>item.track.id));
  if(!visible.length){
   setLibraryEmpty(showFavorites?'В избранном пока пусто. Нажми ☆ у любого трека.':query?'Ничего не найдено. Проверь название или имя исполнителя.':activePlaylist?'В плейлисте «'+activePlaylist.name+'» пока нет треков. Добавь композиции кнопкой ＋.':'В библиотеке пока нет треков.');
   return;
  }
  visible.forEach(({track:t,index:i})=>{
   const row=document.createElement('div');row.className='track'+(i===current?' active':'');
+  const selectLabel=document.createElement('label');selectLabel.className='track-select';selectLabel.title='Выбрать трек';
+  const selectBox=document.createElement('input');selectBox.type='checkbox';selectBox.checked=selectedTrackIds.has(t.id);selectBox.setAttribute('aria-label','Выбрать '+t.name);selectBox.onchange=()=>{if(selectBox.checked)selectedTrackIds.add(t.id);else selectedTrackIds.delete(t.id);updateBulkTools(visible.map(item=>item.track.id))};
+  selectLabel.appendChild(selectBox);
   const inPlaylist=activePlaylist&&activePlaylist.trackIds.includes(t.id);
   const art=document.createElement('div');art.className='track-art';art.textContent='M';
   const info=document.createElement('div');info.className='track-info';
@@ -138,7 +144,7 @@ function render(){
   const shareBtn=document.createElement('button');shareBtn.className='track-share';shareBtn.type='button';shareBtn.setAttribute('aria-label','Поделиться аудиофайлом');shareBtn.title='Поделиться треком';shareBtn.textContent='↗';
   const exportBtn=document.createElement('button');exportBtn.className='track-export';exportBtn.type='button';exportBtn.setAttribute('aria-label','Скачать копию трека');exportBtn.title='Скачать копию';exportBtn.textContent='↓';
   const remove=document.createElement('button');remove.className='track-delete';remove.type='button';remove.setAttribute('aria-label','Удалить трек');remove.title='Удалить трек';remove.textContent='×';
-  row.append(art,info,favorite,add,editBtn,shareBtn,exportBtn,play,remove);
+  row.append(selectLabel,art,info,favorite,add,editBtn,shareBtn,exportBtn,play,remove);
   row.onclick=()=>load(i,true);
   favorite.onclick=e=>{e.stopPropagation();toggleFavorite(i)};
   add.onclick=e=>{e.stopPropagation();addToPlaylist(i)};
@@ -149,6 +155,53 @@ function render(){
   tracksEl.appendChild(row);
  });
 }
+
+function updateBulkTools(visibleIds){
+ const bar=document.getElementById('bulkTools');if(!bar)return;
+ const count=document.getElementById('bulkSelectedCount');
+ const visible=new Set(visibleIds);
+ const selectedVisible=visibleIds.filter(id=>selectedTrackIds.has(id)).length;
+ if(count)count.textContent='Выбрано: '+selectedTrackIds.size;
+ const all=document.getElementById('selectVisibleTracks');
+ if(all){all.textContent=visibleIds.length&&selectedVisible===visibleIds.length?'Снять выделение':'Выбрать видимые';all.disabled=!visibleIds.length;all.setAttribute('aria-pressed',String(visibleIds.length>0&&selectedVisible===visibleIds.length));}
+ const add=document.getElementById('bulkAddPlaylist'),remove=document.getElementById('bulkDeleteTracks');
+ if(add)add.disabled=!selectedTrackIds.size||!activePlaylistId;
+ if(remove)remove.disabled=!selectedTrackIds.size;
+ bar.hidden=!tracks.length;
+}
+function toggleVisibleSelection(){
+ const query=(searchInput?.value||'').trim().toLocaleLowerCase('ru');
+ const playlist=playlists.find(p=>p.id===activePlaylistId);
+ const visible=tracks.filter(t=>[t.name,t.artist].filter(Boolean).join(' ').toLocaleLowerCase('ru').includes(query)&&(!showFavorites||t.favorite)&&(!playlist||playlist.trackIds.includes(t.id))).map(t=>t.id);
+ const allSelected=visible.length>0&&visible.every(id=>selectedTrackIds.has(id));
+ visible.forEach(id=>allSelected?selectedTrackIds.delete(id):selectedTrackIds.add(id));render();
+}
+function addSelectedToPlaylist(){
+ const playlist=playlists.find(p=>p.id===activePlaylistId);
+ if(!playlist){alert('Сначала создай или выбери плейлист.');return}
+ const ids=tracks.filter(t=>selectedTrackIds.has(t.id)).map(t=>t.id);
+ if(!ids.length)return;
+ const existing=new Set(playlist.trackIds);ids.forEach(id=>existing.add(id));playlist.trackIds=[...existing];
+ savePlaylists();selectedTrackIds.clear();render();
+}
+async function deleteSelectedTracks(){
+ const ids=tracks.filter(t=>selectedTrackIds.has(t.id)).map(t=>t.id);
+ if(!ids.length||!db)return;
+ if(!confirm('Удалить '+ids.length+' '+trackWord(ids.length)+' из библиотеки этого устройства? Это действие нельзя отменить.'))return;
+ try{
+  await new Promise((resolve,reject)=>{
+   const tx=db.transaction('tracks','readwrite'),store=tx.objectStore('tracks');
+   ids.forEach(id=>store.delete(id));
+   tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||new Error('Операция отменена'));
+  });
+  const removedCurrent=current>=0&&ids.includes(tracks[current]?.id);
+  playlists.forEach(p=>p.trackIds=p.trackIds.filter(id=>!ids.includes(id)));savePlaylists();
+  selectedTrackIds.clear();
+  if(removedCurrent){audio.pause();audio.removeAttribute('src');audio.load();current=-1}
+  await refreshLibrary();
+ }catch(error){alert('Не удалось удалить выбранные треки. Попробуй ещё раз.')}
+}
+
 async function shareTrack(index){
  const track=tracks[index];if(!track?.blob)return;
  const ext=track.blob.type.split('/')[1]?.replace(/[^a-z0-9]/gi,'')||'audio';
@@ -334,6 +387,9 @@ document.getElementById('saveArtistProfile')?.addEventListener('click',()=>{cons
 document.getElementById('editArtistProfile')?.addEventListener('click',()=>{if(sharedArtistProfile)return;document.getElementById('artistNameInput').value=artistProfile.name||'';document.getElementById('artistBioInput').value=artistProfile.bio||'';document.getElementById('artistEditor').hidden=false;document.getElementById('artistNameInput').focus();});
 document.getElementById('cancelArtistEdit')?.addEventListener('click',()=>{document.getElementById('artistEditor').hidden=true;});
 document.getElementById('createPlaylist')?.addEventListener('click',createPlaylist);
+document.getElementById('selectVisibleTracks')?.addEventListener('click',toggleVisibleSelection);
+document.getElementById('bulkAddPlaylist')?.addEventListener('click',addSelectedToPlaylist);
+document.getElementById('bulkDeleteTracks')?.addEventListener('click',deleteSelectedTracks);
 document.getElementById('exportBackup')?.addEventListener('click',exportBackup);
 document.getElementById('importBackupInput')?.addEventListener('change',e=>{importBackup(e.target.files?.[0]);e.target.value=''});
 document.getElementById('deletePlaylist')?.addEventListener('click',deletePlaylist);
