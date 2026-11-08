@@ -470,31 +470,17 @@ async function toggleFavorite(index){
   track.favorite=next;render();
  }catch(error){alert('Не удалось обновить избранное. Попробуй ещё раз.')}
 }
-async function editTrackMetadata(index){
- const track=tracks[index];if(!track||!db)return;
- const name=prompt('Название трека:',track.name||'');
- if(name===null)return;
- const cleanName=name.trim().slice(0,180);
- if(!cleanName){alert('Название трека не может быть пустым.');return}
- const artist=prompt('Имя исполнителя:',track.artist||artistProfile.name||'');
- if(artist===null)return;
- const cleanArtist=artist.trim().slice(0,100);
- const album=prompt('Название альбома (можно оставить пустым):',track.album||'');
- if(album===null)return;
- const cleanAlbum=album.trim().slice(0,120);
- try{
-  await new Promise((resolve,reject)=>{
-   const tx=db.transaction('tracks','readwrite'),store=tx.objectStore('tracks'),request=store.get(track.id);
-   request.onsuccess=()=>{
-    if(!request.result){reject(new Error('Трек не найден'));return}
-    request.result.name=cleanName;request.result.artist=cleanArtist;request.result.album=cleanAlbum;store.put(request.result);
-   };
-   request.onerror=()=>reject(request.error);
-   tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||new Error('Операция отменена'));
-  });
-  track.name=cleanName;track.artist=cleanArtist;track.album=cleanAlbum;render();
- }catch(error){alert('Не удалось сохранить изменения трека. Попробуй ещё раз.')}
+function editTrackMetadata(index){
+ const track=tracks[index],dialog=document.getElementById('trackEditor');if(!track||!dialog)return;
+ document.getElementById('editTrackId').value=String(track.id);
+ document.getElementById('editTrackName').value=track.name||'';
+ document.getElementById('editTrackArtist').value=track.artist||'';
+ document.getElementById('editTrackAlbum').value=track.album||'';
+ document.getElementById('editTrackError').textContent='';
+ dialog.showModal();
+ document.getElementById('editTrackName').focus();
 }
+
 async function removeTrack(index){
  const track=tracks[index];
  if(!track||!db)return;
@@ -720,3 +706,11 @@ window.addEventListener('appinstalled',()=>{
 if(navigator.storage?.persist)navigator.storage.persist().catch(()=>{});
 
 document.getElementById('queueToggle')?.addEventListener('click',()=>{const panel=document.getElementById('queuePanel'),button=document.getElementById('queueToggle');if(!panel||!button)return;panel.hidden=!panel.hidden;button.setAttribute('aria-expanded',String(!panel.hidden));renderQueue()});
+
+document.getElementById('cancelTrackEdit')?.addEventListener('click',()=>document.getElementById('trackEditor')?.close());
+document.getElementById('trackEditorForm')?.addEventListener('submit',async event=>{
+ event.preventDefault();const dialog=document.getElementById('trackEditor'),id=Number(document.getElementById('editTrackId').value),track=tracks.find(item=>String(item.id)===String(id));
+ const name=document.getElementById('editTrackName').value.trim().slice(0,180),artist=document.getElementById('editTrackArtist').value.trim().slice(0,100),album=document.getElementById('editTrackAlbum').value.trim().slice(0,120),error=document.getElementById('editTrackError'),save=event.submitter;
+ if(!track||!name){error.textContent='Укажи название композиции.';return}if(!db){error.textContent='Хранилище пока недоступно.';return}if(save)save.disabled=true;
+ try{await new Promise((resolve,reject)=>{const tx=db.transaction('tracks','readwrite'),store=tx.objectStore('tracks'),request=store.get(track.id);request.onsuccess=()=>{if(!request.result){reject(new Error('Трек не найден'));return}request.result.name=name;request.result.artist=artist;request.result.album=album;store.put(request.result)};request.onerror=()=>reject(request.error);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||new Error('Операция отменена'))});track.name=name;track.artist=artist;track.album=album;render();dialog.close()}catch(err){error.textContent='Не удалось сохранить. Попробуй ещё раз.'}finally{if(save)save.disabled=false}
+});
