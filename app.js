@@ -115,6 +115,7 @@ function getVisibleTrackEntries(){
   if(showPlayed)return playedTrackIds.indexOf(a.track.id)-playedTrackIds.indexOf(b.track.id);
   if(sort==='title')return (a.track.name||'').localeCompare(b.track.name||'','ru',{sensitivity:'base'});
   if(sort==='artist')return (a.track.artist||'').localeCompare(b.track.artist||'','ru',{sensitivity:'base'})||(a.track.name||'').localeCompare(b.track.name||'','ru',{sensitivity:'base'});
+  if(sort==='album')return (a.track.album||'').localeCompare(b.track.album||'','ru',{sensitivity:'base'})||(a.track.artist||'').localeCompare(b.track.artist||'','ru',{sensitivity:'base'})||(a.track.name||'').localeCompare(b.track.name||'','ru',{sensitivity:'base'});
   if(sort==='duration'){const da=Number.isFinite(a.track.duration)?a.track.duration:Infinity,db=Number.isFinite(b.track.duration)?b.track.duration:Infinity;return da-db||(Number(b.track.id)||b.index)-(Number(a.track.id)||a.index)}
   return (Number(b.track.id)||b.index)-(Number(a.track.id)||a.index);
  });
@@ -394,7 +395,7 @@ async function exportBackup(){
   const backupTracks=[];
   for(const track of saved){
    const sourceBlob=track.blob?.type?.startsWith('audio/')?track.blob:new Blob([track.blob],{type:guessAudioMime(track.name)});
-   backupTracks.push({id:track.id,name:track.name||'Без названия',artist:track.artist||'',type:sourceBlob.type,favorite:!!track.favorite,data:await blobToDataUrl(sourceBlob),cover:track.cover instanceof Blob?await blobToDataUrl(track.cover):null});
+   backupTracks.push({id:track.id,name:track.name||'Без названия',artist:track.artist||'',type:sourceBlob.type,favorite:!!track.favorite,album:track.album||'',duration:Number.isFinite(track.duration)?track.duration:null,data:await blobToDataUrl(sourceBlob),cover:track.cover instanceof Blob?await blobToDataUrl(track.cover):null});
   }
   downloadJson({format:'MOP_BACKUP',version:1,createdAt:new Date().toISOString(),artistProfile,playlists,tracks:backupTracks},'MOP-backup-'+new Date().toISOString().slice(0,10)+'.json');
   alert('Резервная копия создана. Сохрани JSON-файл отдельно от телефона, чтобы не потерять музыку.');
@@ -410,7 +411,7 @@ async function importBackup(file){
   if(!confirm('Импорт заменит текущую музыку, плейлисты и профиль на данные из резервной копии. Продолжить?'))return;
   const restored=backup.tracks.map((t,index)=>{
    const blob=dataUrlToBlob(t.data);
-   const record={name:String(t.name||'Без названия').slice(0,180),artist:String(t.artist||'').slice(0,100),blob,type:blob.type||String(t.type||''),favorite:!!t.favorite};
+   const record={name:String(t.name||'Без названия').slice(0,180),artist:String(t.artist||'').slice(0,100),album:String(t.album||'').slice(0,120),...(Number.isFinite(t.duration)&&t.duration>0?{duration:t.duration}:{}),blob,type:blob.type||String(t.type||''),favorite:!!t.favorite};
    if(t.cover)record.cover=dataUrlToBlob(t.cover);
    if(Number.isSafeInteger(t.id)&&t.id>0)record.id=t.id;
    return record;
