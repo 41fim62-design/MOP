@@ -319,3 +319,16 @@
 .library-stat span{display:block;margin-bottom:7px;color:var(--muted);font-size:9px;font-weight:700;letter-spacing:1.1px}
 .library-stat b{display:block;overflow:hidden;color:#eee8f7;font-size:20px;font-weight:700;text-overflow:ellipsis;white-space:nowrap}
 @media(max-width:560px){.library-stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.library-stat{padding:11px 12px}.library-stat b{font-size:18px}}
+
+
+/* Bulk selection and library actions */
+.bulk-tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 14px;padding:10px 12px;border:1px solid #302a3b;border-radius:12px;background:#15121d}
+.bulk-tools[hidden]{display:none}
+.bulk-tools span{margin-right:auto;color:#d8c9f1;font-size:12px;font-weight:700}
+.bulk-tools button{min-height:34px;padding:7px 11px;border:1px solid #514276;border-radius:18px;background:#211a31;color:#e8ddff;font:600 11px system-ui;cursor:pointer}
+.bulk-tools button:disabled{opacity:.38;cursor:not-allowed}
+.bulk-tools button:hover:not(:disabled){border-color:var(--violet);background:#302344}
+.track-select{display:flex;align-items:center;justify-content:center;flex:0 0 22px;width:22px;cursor:pointer}
+.track-select input{width:17px;height:17px;accent-color:#a78bfa;cursor:pointer}
+.track-select:focus-within{outline:2px solid var(--violet);outline-offset:3px;border-radius:4px}
+@media(max-width:560px){.bulk-tools{gap:6px}.bulk-tools span{flex-basis:100%}.bulk-tools button{flex:1 1 auto;padding:7px 8px}}
