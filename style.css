@@ -268,3 +268,8 @@
 /* Disabled playlist action */
 .delete-playlist:disabled{opacity:.38;cursor:not-allowed;filter:saturate(.35)}
 .delete-playlist:focus-visible,.create-playlist:focus-visible,.playlist-select:focus-visible,.track button:focus-visible{outline:2px solid var(--violet);outline-offset:2px}
+
+/* Realistic reel speed follows changing tape-pack diameter */
+.cassette.playing .left-spool{animation-duration:var(--left-reel-speed,1.15s)}
+.cassette.playing .right-spool{animation-duration:var(--right-reel-speed,.72s)}
+.left-pack,.right-pack{stroke-linecap:butt}
