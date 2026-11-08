@@ -158,14 +158,25 @@ input.addEventListener('change',async e=>{
  input.value='';
 });
 async function refreshLibrary(){
+ const previousTrack=current>=0?tracks[current]:null;
+ const previousTime=audio.currentTime||0;
+ const wasPlaying=!!previousTrack&&!audio.paused;
  const saved=await readTracks();
  tracks.forEach(t=>URL.revokeObjectURL(t.url));
  tracks=saved.map(t=>({...t,url:URL.createObjectURL(t.blob)}));
  renderArtistProfile();
- const previous=current;
- current=-1;render();
- if(tracks.length){load(previous>=0&&previous<tracks.length?previous:0,false)}
- else{audio.removeAttribute('src');audio.load()}
+ const restoredIndex=previousTrack?tracks.findIndex(t=>t.id===previousTrack.id):-1;
+ render();
+ if(tracks.length){
+  const target=restoredIndex>=0?restoredIndex:Math.min(Math.max(current,0),tracks.length-1);
+  if(restoredIndex>=0){
+   audio.addEventListener('loadedmetadata',()=>{
+    if(Number.isFinite(audio.duration))audio.currentTime=Math.min(previousTime,audio.duration);
+    if(wasPlaying)audio.play().catch(()=>{});
+   },{once:true});
+  }
+  load(target,false);
+ }else{current=-1;audio.removeAttribute('src');audio.load();sync()}
 }
 playBtn.onclick=()=>{
  if(current<0){const queue=playbackQueue();if(queue.length)load(queue[0],true);return}
