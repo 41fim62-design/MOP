@@ -72,7 +72,22 @@ function loadPlaylists(){try{const value=JSON.parse(localStorage.getItem('mop-pl
 function savePlaylists(){localStorage.setItem('mop-playlists',JSON.stringify(playlists))}
 function renderPlaylistOptions(){const select=document.getElementById('playlistSelect');if(!select)return;select.replaceChildren(new Option('Все треки',''));playlists.forEach(p=>select.add(new Option(p.name,p.id)));select.value=activePlaylistId;const remove=document.getElementById('deletePlaylist');if(remove)remove.disabled=!activePlaylistId;}
 function setLibraryEmpty(message){const box=document.createElement('div');box.className='empty';box.textContent=message;tracksEl.replaceChildren(box);}
-function playbackQueue(){const playlist=playlists.find(p=>p.id===activePlaylistId);if(!playlist)return tracks.map((_,i)=>i);return tracks.map((track,index)=>playlist.trackIds.includes(track.id)?index:-1).filter(index=>index>=0);}
+function getVisibleTrackEntries(){
+ const query=(searchInput?.value||'').trim().toLocaleLowerCase('ru');
+ const playlist=playlists.find(p=>p.id===activePlaylistId);
+ const visible=tracks.map((track,index)=>({track,index})).filter(({track})=>{
+  const searchable=[track.name,track.artist].filter(Boolean).join(' ').toLocaleLowerCase('ru');
+  return searchable.includes(query)&&(!showFavorites||track.favorite)&&(!playlist||playlist.trackIds.includes(track.id));
+ });
+ const sort=document.getElementById('trackSort')?.value||'newest';
+ visible.sort((a,b)=>{
+  if(sort==='title')return (a.track.name||'').localeCompare(b.track.name||'','ru',{sensitivity:'base'});
+  if(sort==='artist')return (a.track.artist||'').localeCompare(b.track.artist||'','ru',{sensitivity:'base'})||(a.track.name||'').localeCompare(b.track.name||'','ru',{sensitivity:'base'});
+  return (Number(b.track.id)||b.index)-(Number(a.track.id)||a.index);
+ });
+ return visible;
+}
+function playbackQueue(){return getVisibleTrackEntries().map(item=>item.index);}
 function stepTrack(direction){const queue=playbackQueue();if(!queue.length)return;let position=queue.indexOf(current);if(position<0)position=direction>0?-1:0;const next=position+direction;if(next<0||next>=queue.length){if(direction<0)load(queue[queue.length-1],true);else{audio.pause();audio.currentTime=0;sync()}return}load(queue[next],true);}
 const fmt=s=>!Number.isFinite(s)?'0:00':Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0');
 function openLibrary(){
@@ -135,16 +150,7 @@ function render(){
  tracksEl.innerHTML='';
  const query=(searchInput?.value||'').trim().toLocaleLowerCase('ru');
  const activePlaylist=playlists.find(p=>p.id===activePlaylistId);
- const visible=tracks.map((track,index)=>({track,index})).filter(({track})=>{
-  const searchable=[track.name,track.artist].filter(Boolean).join(' ').toLocaleLowerCase('ru');
-  return searchable.includes(query)&&(!showFavorites||track.favorite)&&(!activePlaylist||activePlaylist.trackIds.includes(track.id));
- });
- const sort=document.getElementById('trackSort')?.value||'newest';
- visible.sort((a,b)=>{
-  if(sort==='title')return (a.track.name||'').localeCompare(b.track.name||'','ru',{sensitivity:'base'});
-  if(sort==='artist')return (a.track.artist||'').localeCompare(b.track.artist||'','ru',{sensitivity:'base'})||(a.track.name||'').localeCompare(b.track.name||'','ru',{sensitivity:'base'});
-  return (Number(b.track.id)||b.index)-(Number(a.track.id)||a.index);
- });
+ const visible=getVisibleTrackEntries();
  if(countEl&&query)countEl.textContent+=' · найдено: '+visible.length;
  updateBulkTools(visible.map(item=>item.track.id));
  if(!visible.length){
@@ -440,6 +446,7 @@ function sync(){
 }
 searchInput?.addEventListener('input',render);
 document.getElementById('trackSort')?.addEventListener('change',render);
+document.getElementById('playVisibleTracks')?.addEventListener('click',()=>{const queue=playbackQueue();if(queue.length)load(queue[0],true);else alert('В этом разделе пока нет композиций.');});
 document.getElementById('shareArtistProfile')?.addEventListener('click',shareArtistProfile);
 document.getElementById('artistPhotoButton')?.addEventListener('click',chooseArtistPhoto);
 document.getElementById('removeArtistPhoto')?.addEventListener('click',()=>{if(!artistProfile.photo)return;delete artistProfile.photo;saveArtistProfile();});
