@@ -392,3 +392,5 @@ body.file-dragging{outline:3px solid #a78bfa;outline-offset:-7px}
 #recentTracksFilter.active{border-color:var(--violet);background:#2a2038;color:#e3d3ff}
 
 #playedTracksFilter.active{border-color:var(--violet);background:#2a2038;color:#e3d3ff}
+
+.history-clear{padding:7px 10px;border:1px solid #40384d;border-radius:18px;background:#17141f;color:#aaa2b2;font:500 11px system-ui;cursor:pointer}.history-clear:hover{border-color:#a78bfa;color:#e3d3ff}.history-clear:focus-visible{outline:2px solid #a78bfa;outline-offset:3px}
