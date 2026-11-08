@@ -212,7 +212,7 @@
 
 /* Mechanical detail and balanced reel winding */
 .tape-mechanism{max-width:100%;min-width:0}
-.left-spool,.right-spool{transform-box:view-box;transform-origin:50% 50%}
+.left-spool,.right-spool{transform-box:fill-box;transform-origin:center}
 .cassette.playing .left-spool{animation:spoolTurn 1.15s linear infinite}
 .cassette.playing .right-spool{animation:spoolTurnReverse 1.15s linear infinite}
 .spool-hub{pointer-events:none}
