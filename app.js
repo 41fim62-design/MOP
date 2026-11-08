@@ -238,13 +238,13 @@ function render(){
   art.onclick=e=>{e.stopPropagation();chooseTrackCover(t.id)};
   const info=document.createElement('div');info.className='track-info';
   const title=document.createElement('b');title.textContent=t.name;
-  const subtitle=document.createElement('span');subtitle.textContent=(t.artist||artistProfile.name||'Мой проект')+' · '+(inPlaylist?'В плейлисте «'+activePlaylist.name+'»':'На этом устройстве');
+  const subtitle=document.createElement('span');subtitle.textContent=(t.artist||artistProfile.name||'Мой проект')+(t.album?' · '+t.album:'')+' · '+(inPlaylist?'В плейлисте «'+activePlaylist.name+'»':'На этом устройстве');
   const duration=document.createElement('span');duration.className='track-duration';duration.dataset.trackDuration=String(t.id);duration.textContent=Number.isFinite(t.duration)?fmt(t.duration):'…';
   info.append(title,subtitle,duration);
   const favorite=document.createElement('button');favorite.className='track-favorite';favorite.type='button';favorite.setAttribute('aria-label',t.favorite?'Убрать из избранного':'Добавить в избранное');favorite.title=favorite.getAttribute('aria-label');favorite.textContent=t.favorite?'★':'☆';
   const add=document.createElement('button');add.className='track-add-playlist';add.type='button';add.setAttribute('aria-label','Добавить или убрать из плейлиста');add.title=add.getAttribute('aria-label');add.textContent=inPlaylist?'✓':'＋';
   const play=document.createElement('button');play.className='track-play';play.type='button';play.setAttribute('aria-label','Играть');play.textContent='▶';
-  const editBtn=document.createElement('button');editBtn.className='track-edit';editBtn.type='button';editBtn.setAttribute('aria-label','Изменить название и исполнителя');editBtn.title='Изменить данные трека';editBtn.textContent='✎';
+  const editBtn=document.createElement('button');editBtn.className='track-edit';editBtn.type='button';editBtn.setAttribute('aria-label','Изменить название, исполнителя и альбом');editBtn.title='Изменить данные трека';editBtn.textContent='✎';
   const shareBtn=document.createElement('button');shareBtn.className='track-share';shareBtn.type='button';shareBtn.setAttribute('aria-label','Поделиться аудиофайлом');shareBtn.title='Поделиться треком';shareBtn.textContent='↗';
   const exportBtn=document.createElement('button');exportBtn.className='track-export';exportBtn.type='button';exportBtn.setAttribute('aria-label','Скачать копию трека');exportBtn.title='Скачать копию';exportBtn.textContent='↓';
   const remove=document.createElement('button');remove.className='track-delete';remove.type='button';remove.setAttribute('aria-label','Удалить трек');remove.title='Удалить трек';remove.textContent='×';
@@ -274,9 +274,7 @@ function updateBulkTools(visibleIds){
  bar.hidden=!tracks.length;
 }
 function toggleVisibleSelection(){
- const query=(searchInput?.value||'').trim().toLocaleLowerCase('ru');
- const playlist=playlists.find(p=>p.id===activePlaylistId);
- const visible=tracks.filter(t=>[t.name,t.artist].filter(Boolean).join(' ').toLocaleLowerCase('ru').includes(query)&&(!showFavorites||t.favorite)&&(!playlist||playlist.trackIds.includes(t.id))).map(t=>t.id);
+ const visible=getVisibleTrackEntries().map(item=>item.track.id);
  const allSelected=visible.length>0&&visible.every(id=>selectedTrackIds.has(id));
  visible.forEach(id=>allSelected?selectedTrackIds.delete(id):selectedTrackIds.add(id));render();
 }
