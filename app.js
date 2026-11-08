@@ -34,6 +34,19 @@ function readSharedArtistProfile(){
 function saveArtistProfile(){localStorage.setItem('mop-artist-profile',JSON.stringify(artistProfile));renderArtistProfile();}
 function cleanExternalLink(value){const raw=String(value||'').trim();if(!raw)return '';try{const url=new URL(raw);return url.protocol==='https:'?url.href.slice(0,300):''}catch(error){return ''}}
 function getArtistLinks(source){const links=source?.links&&typeof source.links==='object'?source.links:{};return {vk:cleanExternalLink(links.vk),telegram:cleanExternalLink(links.telegram),yandex:cleanExternalLink(links.yandex)}}
+function loadArtistSubscriptions(){try{const value=JSON.parse(localStorage.getItem('mop-artist-subscriptions')||'[]');return Array.isArray(value)?value.filter(item=>item&&typeof item.key==='string'&&typeof item.name==='string'&&typeof item.url==='string').slice(0,300):[]}catch(error){return []}}
+function artistSubscriptionKey(profile){const links=getArtistLinks(profile);const identity=links.vk||links.telegram||links.yandex||((profile?.name||'').trim().toLocaleLowerCase('ru')+'|'+(profile?.bio||'').trim().toLocaleLowerCase('ru'));return String(identity).slice(0,400)}
+function getArtistSubscription(){if(!sharedArtistProfile)return null;const key=artistSubscriptionKey(sharedArtistProfile);return loadArtistSubscriptions().find(item=>item.key===key)||null}
+function toggleSharedArtistSubscription(){
+ if(!sharedArtistProfile)return;const key=artistSubscriptionKey(sharedArtistProfile),items=loadArtistSubscriptions(),index=items.findIndex(item=>item.key===key);
+ if(index>=0)items.splice(index,1);else{if(items.length>=300){alert('Достигнут лимит подписок на этом устройстве.');return}items.unshift({key,name:sharedArtistProfile.name,bio:sharedArtistProfile.bio||'',accent:sharedArtistProfile.accent||'#a78bfa',links:getArtistLinks(sharedArtistProfile),url:location.href,addedAt:new Date().toISOString()})}
+ try{localStorage.setItem('mop-artist-subscriptions',JSON.stringify(items));renderArtistProfile()}catch(error){alert('Не удалось сохранить подписку. Проверь свободное место в браузере.')}
+}
+function renderArtistSubscriptions(){
+ const section=document.getElementById('artistSubscriptions'),list=document.getElementById('artistSubscriptionsList'),count=document.getElementById('artistSubscriptionsCount');if(!section||!list)return;
+ const items=loadArtistSubscriptions();section.hidden=!!sharedArtistProfile||!items.length;if(count)count.textContent=String(items.length);list.replaceChildren();
+ items.forEach(item=>{const card=document.createElement('article');card.className='artist-subscription-card';const avatar=document.createElement('span');avatar.className='artist-subscription-avatar';avatar.style.setProperty('--artist-accent',/^#[0-9a-f]{6}$/i.test(item.accent||'')?item.accent:'#a78bfa');avatar.textContent=(item.name||'M').trim().charAt(0).toUpperCase()||'M';const info=document.createElement('span');info.className='artist-subscription-info';const name=document.createElement('b');name.textContent=item.name;const bio=document.createElement('small');bio.textContent=item.bio||'Исполнитель на MOP';info.append(name,bio);const open=document.createElement('button');open.type='button';open.textContent='Открыть';open.addEventListener('click',()=>{try{const url=new URL(item.url);if(url.origin===location.origin&&url.pathname===location.pathname)location.href=url.href;else alert('Ссылка на профиль изменилась или ведёт на другой адрес. Открой исходную ссылку исполнителя.')}catch(error){alert('Ссылка профиля недействительна.')}});const remove=document.createElement('button');remove.type='button';remove.className='artist-subscription-remove';remove.textContent='×';remove.setAttribute('aria-label','Отписаться от '+item.name);remove.addEventListener('click',()=>{const next=loadArtistSubscriptions().filter(entry=>entry.key!==item.key);try{localStorage.setItem('mop-artist-subscriptions',JSON.stringify(next));renderArtistSubscriptions()}catch(error){alert('Не удалось изменить подписки.')}});card.append(avatar,info,open,remove);list.appendChild(card)});
+}
 function renderArtistSocialLinks(){
  const box=document.getElementById('artistSocialLinks');if(!box)return;box.replaceChildren();
  const profile=sharedArtistProfile||artistProfile,labels={vk:'ВКонтакте',telegram:'Telegram',yandex:'Яндекс Музыка'};
@@ -60,6 +73,8 @@ function renderArtistProfile(){
  const notice=document.getElementById('profileNotice');
  if(notice)notice.hidden=!sharedArtistProfile;
  renderArtistSocialLinks();
+ const follow=document.getElementById('sharedArtistFollow');if(follow){const subscribed=!!getArtistSubscription();follow.hidden=!sharedArtistProfile;follow.textContent=subscribed?'✓ Вы подписаны':'＋ Подписаться';follow.setAttribute('aria-pressed',String(subscribed));}
+ renderArtistSubscriptions();
 }
 
 async function chooseArtistPhoto(){
