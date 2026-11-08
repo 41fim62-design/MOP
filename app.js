@@ -468,17 +468,46 @@ document.getElementById('favoritesFilter')?.addEventListener('click',e=>{
  e.currentTarget.textContent=showFavorites?'★ Избранное':'☆ Избранное';
  render();
 });
-input.addEventListener('change',async e=>{
- const files=Array.from(e.target.files||[]).filter(file=>file.type.startsWith('audio/')||/\.(mp3|wav|ogg|flac|m4a|aac|opus)$/i.test(file.name));
- if(!files.length){input.value='';return}
+function isAudioFile(file){return !!file&&(file.type.startsWith('audio/')||/\.(mp3|wav|ogg|flac|m4a|aac|opus|aiff|wma)$/i.test(file.name||''))}
+async function addAudioFiles(fileList){
+ const files=Array.from(fileList||[]).filter(isAudioFile);
+ if(!files.length){setUploadStatus('Не нашёл аудиофайлы. Поддерживаются MP3, WAV, OGG, FLAC, M4A и другие аудиоформаты.',true);return}
+ const status=document.getElementById('uploadStatus');let added=0,failed=0;
+ if(status){status.hidden=false;status.textContent='Подготовка '+files.length+' '+trackWord(files.length)+'…';status.classList.remove('error')}
  try{
   if(!db)await openLibrary();
-  for(const file of files)await storeTrack(file);
+  for(let index=0;index<files.length;index++){
+   const file=files[index];
+   if(status)status.textContent='Добавление '+(index+1)+' из '+files.length+': '+file.name;
+   try{await storeTrack(file);added++}catch(error){failed++}
+  }
   await refreshLibrary();
- }catch(error){
-  alert('Не удалось сохранить музыку на устройстве. Проверь свободное место и разрешение браузера.');
- }
- input.value='';
+  const message='Добавлено: '+added+'. Ошибок: '+failed+'.';
+  setUploadStatus(message,failed>0);
+ }catch(error){setUploadStatus('Не удалось открыть музыкальное хранилище. Проверь разрешение браузера и свободное место.',true)}
+}
+function setUploadStatus(message,isError){
+ const status=document.getElementById('uploadStatus');if(!status)return;
+ status.hidden=false;status.textContent=message;status.classList.toggle('error',!!isError);
+}
+input.addEventListener('change',async e=>{await addAudioFiles(e.target.files);input.value=''});
+let fileDragDepth=0;
+document.addEventListener('dragenter',event=>{
+ if(!Array.from(event.dataTransfer?.types||[]).includes('Files'))return;
+ event.preventDefault();fileDragDepth++;document.body.classList.add('file-dragging');
+ const zone=document.getElementById('dropOverlay');if(zone)zone.hidden=false;
+});
+document.addEventListener('dragover',event=>{if(Array.from(event.dataTransfer?.types||[]).includes('Files'))event.preventDefault()});
+document.addEventListener('dragleave',event=>{
+ if(!Array.from(event.dataTransfer?.types||[]).includes('Files'))return;
+ fileDragDepth=Math.max(0,fileDragDepth-1);
+ if(fileDragDepth===0){document.body.classList.remove('file-dragging');const zone=document.getElementById('dropOverlay');if(zone)zone.hidden=true}
+});
+document.addEventListener('drop',async event=>{
+ if(!event.dataTransfer?.files?.length)return;
+ event.preventDefault();fileDragDepth=0;document.body.classList.remove('file-dragging');
+ const zone=document.getElementById('dropOverlay');if(zone)zone.hidden=true;
+ await addAudioFiles(event.dataTransfer.files);
 });
 async function refreshLibrary(){
  const previousTrack=current>=0?tracks[current]:null;
