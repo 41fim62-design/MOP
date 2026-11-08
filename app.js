@@ -51,7 +51,7 @@ function render(){
  const activePlaylist=playlists.find(p=>p.id===activePlaylistId);
  const visible=tracks.map((track,index)=>({track,index})).filter(({track})=>track.name.toLocaleLowerCase('ru').includes(query)&&(!showFavorites||track.favorite)&&(!activePlaylist||activePlaylist.trackIds.includes(track.id)));
  if(!visible.length){
-  tracksEl.innerHTML='<div class="empty">'+(showFavorites?'В избранном пока пусто. Нажми ☆ у любого трека.':query?'Ничего не найдено. Попробуй другое название.':'В библиотеке пока нет треков.')+'</div>';
+  tracksEl.innerHTML='<div class="empty">'+(showFavorites?'В избранном пока пусто. Нажми ☆ у любого трека.':query?'Ничего не найдено. Попробуй другое название.':activePlaylist?'В плейлисте «'+activePlaylist.name+'» пока нет треков. Добавь композиции кнопкой ＋.':'В библиотеке пока нет треков.')+'</div>';
   return;
  }
  visible.forEach(({track:t,index:i})=>{
@@ -67,6 +67,7 @@ function render(){
  });
 }
 function createPlaylist(){const name=prompt('Название нового плейлиста:');if(!name||!name.trim())return;const p={id:'pl-'+Date.now()+'-'+Math.random().toString(36).slice(2,7),name:name.trim(),trackIds:[]};playlists.push(p);activePlaylistId=p.id;savePlaylists();renderPlaylistOptions();render();}
+function deletePlaylist(){const p=playlists.find(x=>x.id===activePlaylistId);if(!p)return;if(!confirm('Удалить плейлист «'+p.name+'»? Сами аудиофайлы останутся в библиотеке.'))return;playlists=playlists.filter(x=>x.id!==p.id);activePlaylistId='';savePlaylists();renderPlaylistOptions();render();}
 function addToPlaylist(index){const track=tracks[index];if(!track)return;if(!activePlaylistId){alert('Сначала создай плейлист и выбери его в списке.');return}const p=playlists.find(x=>x.id===activePlaylistId);if(!p)return;if(p.trackIds.includes(track.id))p.trackIds=p.trackIds.filter(id=>id!==track.id);else p.trackIds.push(track.id);savePlaylists();render();}
 async function toggleFavorite(index){
  const track=tracks[index];if(!track||!db)return;
@@ -124,6 +125,7 @@ document.getElementById('saveArtistProfile')?.addEventListener('click',()=>{cons
 document.getElementById('editArtistProfile')?.addEventListener('click',()=>{document.getElementById('artistNameInput').value=artistProfile.name||'';document.getElementById('artistBioInput').value=artistProfile.bio||'';document.getElementById('artistEditor').hidden=false;document.getElementById('artistNameInput').focus();});
 document.getElementById('cancelArtistEdit')?.addEventListener('click',()=>{document.getElementById('artistEditor').hidden=true;});
 document.getElementById('createPlaylist')?.addEventListener('click',createPlaylist);
+document.getElementById('deletePlaylist')?.addEventListener('click',deletePlaylist);
 document.getElementById('playlistSelect')?.addEventListener('change',e=>{activePlaylistId=e.target.value;render()});
 document.getElementById('favoritesFilter')?.addEventListener('click',e=>{
  showFavorites=!showFavorites;
