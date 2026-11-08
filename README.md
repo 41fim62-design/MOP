@@ -41,3 +41,5 @@ Open the GitHub Pages site over HTTPS in a modern browser. On supported browsers
 Историю прослушивания можно очистить отдельной кнопкой в каталоге. Перед очисткой приложение просит подтверждение.
 
 - Album detail pages show the album artwork, artists, track count, and playable track list, with one-tap album playback.
+
+- A private listening activity feed shows up to eight recently played local tracks and lets the listener replay them. This activity is stored only on the current device.
