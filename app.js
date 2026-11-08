@@ -191,3 +191,25 @@ audio.volume=.8;
  catch(error){tracksEl.innerHTML='<div class="empty">Локальное хранилище недоступно. Музыку можно добавить после разрешения хранилища браузера.</div>'}
 })();
 if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+
+
+/* PWA installation and durable local music storage */
+let deferredInstallPrompt=null;
+const installButton=document.getElementById('installApp');
+window.addEventListener('beforeinstallprompt',event=>{
+ event.preventDefault();
+ deferredInstallPrompt=event;
+ if(installButton)installButton.hidden=false;
+});
+installButton?.addEventListener('click',async()=>{
+ if(!deferredInstallPrompt)return;
+ deferredInstallPrompt.prompt();
+ await deferredInstallPrompt.userChoice;
+ deferredInstallPrompt=null;
+ installButton.hidden=true;
+});
+window.addEventListener('appinstalled',()=>{
+ deferredInstallPrompt=null;
+ if(installButton)installButton.hidden=true;
+});
+if(navigator.storage?.persist)navigator.storage.persist().catch(()=>{});
