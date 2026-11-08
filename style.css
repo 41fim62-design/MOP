@@ -264,3 +264,7 @@
 }
 
 .delete-playlist{min-height:38px;padding:8px 13px;border:1px solid #49313b;border-radius:22px;background:#21171d;color:#d8aab6;font:600 12px system-ui;cursor:pointer}.delete-playlist:hover{border-color:#b56b83;background:#38202a}
+
+/* Disabled playlist action */
+.delete-playlist:disabled{opacity:.38;cursor:not-allowed;filter:saturate(.35)}
+.delete-playlist:focus-visible,.create-playlist:focus-visible,.playlist-select:focus-visible,.track button:focus-visible{outline:2px solid var(--violet);outline-offset:2px}
