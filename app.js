@@ -54,6 +54,16 @@ function readSharedArtistReply(){try{const raw=new URLSearchParams(location.sear
 function loadArtistInbox(){try{const value=JSON.parse(localStorage.getItem('mop-artist-inbox')||'[]');return Array.isArray(value)?value.filter(item=>item&&typeof item.id==='string'&&typeof item.text==='string').slice(0,100):[]}catch(error){return []}}
 function renderArtistInbox(){const section=document.getElementById('artistInbox'),list=document.getElementById('artistInboxList'),count=document.getElementById('artistInboxCount'),search=document.getElementById('artistInboxSearch');if(!section||!list)return;const items=loadArtistInbox(),query=(search?.value||'').trim().toLocaleLowerCase('ru');section.hidden=!!sharedArtistProfile||!items.length;if(count)count.textContent=String(items.length);list.replaceChildren();const visible=items.filter(item=>[item.artist,item.text,item.postText,item.createdAt].some(value=>String(value||'').toLocaleLowerCase('ru').includes(query)));visible.forEach(item=>{const card=document.createElement('article');card.className='artist-inbox-card';const author=document.createElement('b');author.textContent=item.artist||'Слушатель';const date=document.createElement('small');date.textContent=item.createdAt||'';const message=document.createElement('p');message.textContent=item.text;const origin=document.createElement('small');origin.textContent=item.postText?'К публикации: '+item.postText:'';const remove=document.createElement('button');remove.type='button';remove.textContent='Удалить';remove.addEventListener('click',()=>{try{localStorage.setItem('mop-artist-inbox',JSON.stringify(loadArtistInbox().filter(entry=>entry.id!==item.id)));renderArtistInbox()}catch(error){alert('Не удалось удалить отклик.')}});card.append(author,date,message,origin,remove);list.append(card)});if(items.length&&!visible.length){const empty=document.createElement('p');empty.className='artist-inbox-empty';empty.textContent='По этому запросу откликов нет.';list.append(empty)}} 
 function exportArtistInbox(){const items=loadArtistInbox();if(!items.length){alert('Пока нет сохранённых откликов.');return}const quote=value=>'"'+String(value??'').replace(/"/g,'""')+'"';const rows=[['Автор','Дата','Отклик','Публикация'],...items.map(item=>[item.artist,item.createdAt,item.text,item.postText])];const csv='\\uFEFF'+rows.map(row=>row.map(quote).join(';')).join('\\r\\n');const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));const link=document.createElement('a');link.href=url;link.download='mop-artist-replies.csv';document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000)}
+
+function exportArtistPosts(){
+ const posts=loadArtistPosts();
+ if(!posts.length){alert('Пока нет публикаций для экспорта.');return}
+ const quote=value=>'"'+String(value??'').replace(/"/g,'""')+'"';
+ const rows=[['Дата','Исполнитель','Текст публикации','Трек','Альбом','Закреплена','Дата изменения'],...posts.map(post=>[post.createdAt,artistProfile.name,post.text,post.track,post.album,post.pinned?'Да':'Нет',post.editedAt||''])];
+ const csv='\\uFEFF'+rows.map(row=>row.map(quote).join(';')).join('\\r\\n');
+ const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+ const link=document.createElement('a');link.href=url;link.download='mop-artist-publications.csv';document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
 function loadArtistPosts(){try{const value=JSON.parse(localStorage.getItem('mop-artist-posts')||'[]');return Array.isArray(value)?value.filter(p=>p&&typeof p.id==='string'&&typeof p.text==='string').slice(0,30):[]}catch(error){return []}}
 function encodePostPayload(post){const bytes=new TextEncoder().encode(JSON.stringify(post));let binary='';bytes.forEach(byte=>binary+=String.fromCharCode(byte));return btoa(binary).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
 function renderArtistPosts(){
@@ -787,6 +797,7 @@ document.getElementById('artistPostEditorForm')?.addEventListener('submit',event
 });
 
 document.getElementById('artistPostSearch')?.addEventListener('input',renderArtistPosts);
+document.getElementById('exportArtistPosts')?.addEventListener('click',exportArtistPosts);
 document.getElementById('artistInboxSearch')?.addEventListener('input',renderArtistInbox);
 document.getElementById('exportArtistInbox')?.addEventListener('click',exportArtistInbox);
 document.getElementById('sharedArtistFollow')?.addEventListener('click',toggleSharedArtistSubscription);
