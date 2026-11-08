@@ -137,6 +137,10 @@ function exportTrack(index){
  setTimeout(()=>URL.revokeObjectURL(url),1500);
 }
 
+function guessAudioMime(name){
+ const ext=String(name||'').split('.').pop().toLowerCase();
+ return ({mp3:'audio/mpeg',wav:'audio/wav',ogg:'audio/ogg',flac:'audio/flac',m4a:'audio/mp4',aac:'audio/aac',opus:'audio/ogg'})[ext]||'audio/mpeg';
+}
 function blobToDataUrl(blob){
  return new Promise((resolve,reject)=>{
   const reader=new FileReader();
@@ -170,7 +174,7 @@ async function exportBackup(){
  try{
   const backupTracks=[];
   for(const track of saved){
-   backupTracks.push({id:track.id,name:track.name||'Без названия',artist:track.artist||'',type:track.type||track.blob?.type||'audio/mpeg',favorite:!!track.favorite,data:await blobToDataUrl(track.blob)});
+   const sourceBlob=track.blob?.type?.startsWith('audio/')?track.blob:new Blob([track.blob],{type:guessAudioMime(track.name)});\n   backupTracks.push({id:track.id,name:track.name||'Без названия',artist:track.artist||'',type:sourceBlob.type,favorite:!!track.favorite,data:await blobToDataUrl(sourceBlob)});
   }
   downloadJson({format:'MOP_BACKUP',version:1,createdAt:new Date().toISOString(),artistProfile,playlists,tracks:backupTracks},'MOP-backup-'+new Date().toISOString().slice(0,10)+'.json');
   alert('Резервная копия создана. Сохрани JSON-файл отдельно от телефона, чтобы не потерять музыку.');
