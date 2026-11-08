@@ -5,6 +5,7 @@ const playBtn=document.getElementById('play');
 const cassette=document.getElementById('cassette');
 const seek=document.getElementById('seek');
 const searchInput=document.getElementById('trackSearch');
+const durationEl=document.getElementById('duration'),elapsedEl=document.getElementById('elapsed');
 let tracks=[],current=-1,db=null,showFavorites=false,playlists=loadPlaylists(),activePlaylistId='',artistProfile=loadArtistProfile();
 function loadArtistProfile(){try{return JSON.parse(localStorage.getItem('mop-artist-profile'))||{name:'Мой проект',bio:'Независимый исполнитель на MOP'}}catch(e){return {name:'Мой проект',bio:'Независимый исполнитель на MOP'}}}
 function saveArtistProfile(){localStorage.setItem('mop-artist-profile',JSON.stringify(artistProfile));renderArtistProfile();}
@@ -68,14 +69,24 @@ function render(){
   const favorite=document.createElement('button');favorite.className='track-favorite';favorite.type='button';favorite.setAttribute('aria-label',t.favorite?'Убрать из избранного':'Добавить в избранное');favorite.title=favorite.getAttribute('aria-label');favorite.textContent=t.favorite?'★':'☆';
   const add=document.createElement('button');add.className='track-add-playlist';add.type='button';add.setAttribute('aria-label','Добавить или убрать из плейлиста');add.title=add.getAttribute('aria-label');add.textContent=inPlaylist?'✓':'＋';
   const play=document.createElement('button');play.className='track-play';play.type='button';play.setAttribute('aria-label','Играть');play.textContent='▶';
+  const exportBtn=document.createElement('button');exportBtn.className='track-export';exportBtn.type='button';exportBtn.setAttribute('aria-label','Скачать копию трека');exportBtn.title='Скачать копию';exportBtn.textContent='↓';
   const remove=document.createElement('button');remove.className='track-delete';remove.type='button';remove.setAttribute('aria-label','Удалить трек');remove.title='Удалить трек';remove.textContent='×';
-  row.append(art,info,favorite,add,play,remove);
+  row.append(art,info,favorite,add,exportBtn,play,remove);
   row.onclick=()=>load(i,true);
   favorite.onclick=e=>{e.stopPropagation();toggleFavorite(i)};
   add.onclick=e=>{e.stopPropagation();addToPlaylist(i)};
+  exportBtn.onclick=e=>{e.stopPropagation();exportTrack(i)};
   remove.onclick=e=>{e.stopPropagation();removeTrack(i)};
   tracksEl.appendChild(row);
  });
+}
+function exportTrack(index){
+ const track=tracks[index];if(!track?.blob)return;
+ const url=URL.createObjectURL(track.blob),link=document.createElement('a');
+ const safeName=(track.name||'MOP-track').replace(/[\\/:*?"<>|]+/g,'_').slice(0,100);
+ link.href=url;link.download=safeName+'.'+(track.blob.type.split('/')[1]?.replace(/[^a-z0-9]/gi,'')||'audio');
+ document.body.appendChild(link);link.click();link.remove();
+ setTimeout(()=>URL.revokeObjectURL(url),1500);
 }
 function createPlaylist(){const name=prompt('Название нового плейлиста:');if(!name||!name.trim())return;const p={id:'pl-'+Date.now()+'-'+Math.random().toString(36).slice(2,7),name:name.trim().slice(0,60),trackIds:[]};playlists.push(p);activePlaylistId=p.id;savePlaylists();renderPlaylistOptions();render();}
 function deletePlaylist(){const p=playlists.find(x=>x.id===activePlaylistId);if(!p)return;if(!confirm('Удалить плейлист «'+p.name+'»? Сами аудиофайлы останутся в библиотеке.'))return;playlists=playlists.filter(x=>x.id!==p.id);activePlaylistId='';savePlaylists();renderPlaylistOptions();render();}
@@ -112,7 +123,7 @@ async function removeTrack(index){
 }
 function load(i,autoplay){
  if(i<0||i>=tracks.length)return;
- current=i;audio.src=tracks[i].url;
+ current=i;audio.pause();audio.src=tracks[i].url;seek.value=0;elapsedEl.textContent='0:00';durationEl.textContent='0:00';
  document.getElementById('currentTitle').textContent=tracks[i].name;
  document.getElementById('currentArtist').textContent=tracks[i].artist||artistProfile.name||'Мой проект';
  render();if(autoplay)audio.play().catch(()=>{});sync();
@@ -186,14 +197,14 @@ document.getElementById('next').onclick=()=>stepTrack(1);
 document.getElementById('prev').onclick=()=>{if(audio.currentTime>3){audio.currentTime=0;return}stepTrack(-1)};
 audio.addEventListener('play',sync);audio.addEventListener('pause',sync);
 audio.addEventListener('ended',()=>stepTrack(1));
-audio.addEventListener('error',()=>{if(audio.currentSrc)document.getElementById('currentArtist').textContent='Не удалось воспроизвести файл. Попробуй загрузить его ещё раз.'});
-audio.addEventListener('loadedmetadata',()=>document.getElementById('duration').textContent=fmt(audio.duration));
+audio.addEventListener('error',()=>{if(audio.currentSrc){document.getElementById('currentArtist').textContent='Не удалось воспроизвести файл. Формат может не поддерживаться браузером.';playBtn.textContent='▶';playBtn.setAttribute('aria-pressed','false')}});
+audio.addEventListener('loadedmetadata',()=>{durationEl.textContent=fmt(audio.duration);seek.disabled=!Number.isFinite(audio.duration)||audio.duration<=0});
 audio.addEventListener('timeupdate',()=>{
- document.getElementById('elapsed').textContent=fmt(audio.currentTime);
- if(audio.duration)seek.value=audio.currentTime/audio.duration*1000;
+ elapsedEl.textContent=fmt(audio.currentTime);
+ if(Number.isFinite(audio.duration)&&audio.duration>0)seek.value=audio.currentTime/audio.duration*1000;
  sync();
 });
-seek.addEventListener('input',()=>{if(audio.duration)audio.currentTime=seek.value/1000*audio.duration});
+seek.addEventListener('input',()=>{if(Number.isFinite(audio.duration)&&audio.duration>0)audio.currentTime=Number(seek.value)/1000*audio.duration});
 document.getElementById('volume').addEventListener('input',e=>audio.volume=Number(e.target.value));
 audio.volume=.8;
 (async()=>{
