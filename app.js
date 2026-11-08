@@ -421,9 +421,13 @@ async function removeTrack(index){
   await refreshLibrary();
  }catch(error){alert('Не удалось удалить трек. Попробуй ещё раз.')}
 }
+function savePlaybackState(){
+ if(current<0||!tracks[current])return;
+ try{localStorage.setItem('mop-playback-state',JSON.stringify({trackId:tracks[current].id,time:Number.isFinite(audio.currentTime)?audio.currentTime:0}))}catch(error){}
+}
 function load(i,autoplay){
  if(i<0||i>=tracks.length)return;
- current=i;audio.pause();audio.src=tracks[i].url;seek.value=0;elapsedEl.textContent='0:00';durationEl.textContent='0:00';
+ current=i;savePlaybackState();audio.pause();audio.src=tracks[i].url;seek.value=0;elapsedEl.textContent='0:00';durationEl.textContent='0:00';
  const playerCover=document.querySelector('.player .cover');
  if(playerCover){playerCover.replaceChildren();if(tracks[i].coverUrl){const image=document.createElement('img');image.src=tracks[i].coverUrl;image.alt='Обложка '+tracks[i].name;playerCover.appendChild(image)}else playerCover.textContent='M'}
  document.getElementById('currentTitle').textContent=tracks[i].name;
@@ -513,6 +517,8 @@ async function refreshLibrary(){
  const previousTrack=current>=0?tracks[current]:null;
  const previousTime=audio.currentTime||0;
  const wasPlaying=!!previousTrack&&!audio.paused;
+ let remembered=null;
+ if(!previousTrack){try{remembered=JSON.parse(localStorage.getItem('mop-playback-state')||'null')}catch(error){}}
  const saved=await readTracks();
  tracks.forEach(t=>URL.revokeObjectURL(t.url));
  tracks=saved.map(t=>({...t,url:URL.createObjectURL(t.blob),coverUrl:t.cover instanceof Blob?URL.createObjectURL(t.cover):''}));
@@ -520,11 +526,14 @@ async function refreshLibrary(){
  const restoredIndex=previousTrack?tracks.findIndex(t=>t.id===previousTrack.id):-1;
  render();
  if(tracks.length){
-  const target=restoredIndex>=0?restoredIndex:Math.min(Math.max(current,0),tracks.length-1);
-  if(restoredIndex>=0){
+  const rememberedIndex=remembered?tracks.findIndex(t=>String(t.id)===String(remembered.trackId)):-1;
+  const target=restoredIndex>=0?restoredIndex:rememberedIndex>=0?rememberedIndex:Math.min(Math.max(current,0),tracks.length-1);
+  if(restoredIndex>=0||rememberedIndex>=0){
+   const restoreTime=restoredIndex>=0?previousTime:Number(remembered.time)||0;
    audio.addEventListener('loadedmetadata',()=>{
-    if(Number.isFinite(audio.duration))audio.currentTime=Math.min(previousTime,audio.duration);
+    if(Number.isFinite(audio.duration)&&audio.duration>0)audio.currentTime=Math.min(Math.max(0,restoreTime),Math.max(0,audio.duration-.25));
     if(wasPlaying)audio.play().catch(()=>{});
+    savePlaybackState();
    },{once:true});
   }
   load(target,false);
@@ -537,11 +546,13 @@ playBtn.onclick=()=>{
 document.getElementById('next').onclick=()=>stepTrack(1);
 document.getElementById('prev').onclick=()=>{if(audio.currentTime>3){audio.currentTime=0;return}stepTrack(-1)};
 audio.addEventListener('play',sync);audio.addEventListener('pause',sync);
-audio.addEventListener('ended',()=>stepTrack(1));
+audio.addEventListener('ended',()=>{savePlaybackState();stepTrack(1)});
+window.addEventListener('pagehide',savePlaybackState);
 audio.addEventListener('error',()=>{if(audio.currentSrc){document.getElementById('currentArtist').textContent='Не удалось воспроизвести файл. Формат может не поддерживаться браузером.';playBtn.textContent='▶';playBtn.setAttribute('aria-pressed','false')}});
 audio.addEventListener('loadedmetadata',()=>{durationEl.textContent=fmt(audio.duration);seek.disabled=!Number.isFinite(audio.duration)||audio.duration<=0});
 audio.addEventListener('timeupdate',()=>{
  elapsedEl.textContent=fmt(audio.currentTime);
+ savePlaybackState();
  if(Number.isFinite(audio.duration)&&audio.duration>0)seek.value=audio.currentTime/audio.duration*1000;
  sync();
 });
