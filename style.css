@@ -332,3 +332,10 @@
 .track-select input{width:17px;height:17px;accent-color:#a78bfa;cursor:pointer}
 .track-select:focus-within{outline:2px solid var(--violet);outline-offset:3px;border-radius:4px}
 @media(max-width:560px){.bulk-tools{gap:6px}.bulk-tools span{flex-basis:100%}.bulk-tools button{flex:1 1 auto;padding:7px 8px}}
+
+
+/* Track artwork */
+.track-cover-button{display:flex;align-items:center;justify-content:center;padding:0;overflow:hidden;border:0;cursor:pointer}
+.track-cover-button img,.player .cover img{display:block;width:100%;height:100%;object-fit:cover;border-radius:inherit}
+.track-cover-button:focus-visible{outline:2px solid var(--violet);outline-offset:3px}
+.player .cover{overflow:hidden}
