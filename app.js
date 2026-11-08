@@ -117,7 +117,7 @@ function sync(){
    pack.setAttribute('stroke-width',thickness.toFixed(2));
   });
  }
- cassette.classList.toggle('playing',active);playBtn.textContent=active?'Ⅱ':'▶';
+ cassette.classList.toggle('playing',active);cassette.style.setProperty('--tape-progress',(progress*100).toFixed(1)+'%');playBtn.textContent=active?'Ⅱ':'▶';
 }
 searchInput?.addEventListener('input',render);
 document.getElementById('saveArtistProfile')?.addEventListener('click',()=>{const name=document.getElementById('artistNameInput').value.trim();const bio=document.getElementById('artistBioInput').value.trim();if(!name){alert('Укажи имя исполнителя.');return}artistProfile={name,bio};saveArtistProfile();document.getElementById('artistEditor').hidden=true;});
