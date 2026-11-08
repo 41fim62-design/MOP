@@ -247,3 +247,18 @@
 
 /* Artist profile */
 .artist-card{margin:0 8vw 38px;padding:20px;max-width:900px;display:flex;align-items:center;gap:16px;background:linear-gradient(115deg,#1b1725,#111118);border:1px solid #393044;border-radius:18px}.artist-avatar{width:64px;height:64px;flex:0 0 64px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(140deg,#b79aff,#543b83);color:#17121f;font-size:28px;font-weight:950;box-shadow:0 5px 18px #a78bfa33}.artist-details{flex:1;min-width:0}.artist-kicker{font-size:9px;letter-spacing:2px;color:var(--violet);font-weight:800}.artist-details h2{font-size:20px;margin:5px 0}.artist-details p{margin:0 0 5px;color:#aaa6b4;font-size:13px;overflow-wrap:anywhere}.artist-details span{font-size:11px;color:var(--muted)}.artist-card>button,.artist-editor button{border:1px solid #594879;border-radius:20px;background:#292039;color:#eee;padding:10px 14px;font:600 12px system-ui;cursor:pointer}.artist-card>button:hover,.artist-editor button:hover{border-color:var(--violet)}.artist-editor{margin:-22px 8vw 38px;max-width:900px;padding:18px;background:#15131c;border:1px solid #393044;border-radius:14px}.artist-editor[hidden]{display:none}.artist-editor label{display:block;margin-bottom:12px;color:#c8c2d2;font-size:12px}.artist-editor input,.artist-editor textarea{display:block;width:100%;margin-top:6px;padding:11px;border:1px solid #393044;border-radius:9px;background:#0d0c12;color:white;font:inherit;resize:vertical}.artist-editor div{display:flex;gap:8px}.artist-editor button:last-child{background:transparent;border-color:#393044}@media(max-width:560px){.artist-card{margin-left:5vw;margin-right:5vw;padding:15px;gap:11px;flex-wrap:wrap}.artist-avatar{width:52px;height:52px;flex-basis:52px}.artist-card>button{margin-left:63px}.artist-editor{margin-left:5vw;margin-right:5vw}}
+
+
+/* MOP cassette: make the magnetic tape unmistakable */
+.tape-mechanism{width:100%;height:100%;overflow:visible}
+.tape-shadow{opacity:.9}
+.tape-strip{filter:drop-shadow(0 0 2px #f0c78c)}
+.tape-core{opacity:.95}
+.left-pack,.right-pack{stroke-linecap:round;filter:drop-shadow(0 0 1px #d49a62)}
+.tape-flow{opacity:.55;stroke-width:2.2;stroke-dasharray:3 7}
+.cassette.playing .tape-flow{opacity:1;animation:tapeTravel .28s linear infinite}
+.cassette.playing .left-spool{animation:spoolTurn .72s linear infinite}
+.cassette.playing .right-spool{animation:spoolTurnReverse .9s linear infinite}
+@media(prefers-reduced-motion:reduce){
+ .cassette.playing .left-spool,.cassette.playing .right-spool,.cassette.playing .tape-flow{animation:none!important}
+}
