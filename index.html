@@ -8,7 +8,7 @@
 <title>MOP — Music of People</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="style.css?v=20261108au">
+<link rel="stylesheet" href="style.css?v=20261108av">
 </head>
 <body>
 <header class="top"><div class="brand">MOP<span>®</span><div class="tag">MUSIC OF PEOPLE</div></div><button id="installApp" class="install-app" type="button" hidden>Установить MOP</button><label class="upload">＋ Загрузить музыку<input id="fileInput" type="file" accept="audio/*" multiple hidden></label></header>
@@ -28,5 +28,6 @@
 </section>
 <dialog id="trackEditor" class="track-editor" aria-labelledby="trackEditorTitle"><form id="trackEditorForm"><h2 id="trackEditorTitle">Данные композиции</h2><input id="editTrackId" type="hidden"><label for="editTrackName">Название</label><input id="editTrackName" maxlength="180" required autocomplete="off"><label for="editTrackArtist">Исполнитель</label><input id="editTrackArtist" maxlength="100" autocomplete="off"><label for="editTrackAlbum">Альбом</label><input id="editTrackAlbum" maxlength="120" autocomplete="off"><p id="editTrackError" class="track-editor-error" role="alert"></p><div class="track-editor-actions"><button type="button" id="cancelTrackEdit">Отмена</button><button type="submit" class="primary">Сохранить</button></div></form></dialog>
 <dialog id="trackLyricsEditor" class="track-editor track-lyrics-editor" aria-labelledby="trackLyricsTitle"><form id="trackLyricsForm"><h2 id="trackLyricsTitle">Текст композиции</h2><input id="lyricsTrackId" type="hidden"><label for="trackLyricsText">Текст песни или личные заметки</label><textarea id="trackLyricsText" maxlength="20000" rows="12" placeholder="Вставь сюда текст композиции…"></textarea><p id="trackLyricsError" class="track-editor-error" role="alert"></p><div class="track-editor-actions"><button type="button" id="cancelTrackLyrics">Отмена</button><button type="submit" class="primary">Сохранить</button></div></form></dialog>
-<audio id="audio"></audio><script src="app.js?v=20261108au"></script>
+<dialog id="artistPostEditor" class="track-editor artist-post-editor" aria-labelledby="artistPostEditorTitle"><form id="artistPostEditorForm"><h2 id="artistPostEditorTitle">Изменить публикацию</h2><input id="editArtistPostId" type="hidden"><label for="editArtistPostText">Текст публикации</label><textarea id="editArtistPostText" maxlength="500" rows="7" required></textarea><small id="editArtistPostCounter" class="post-edit-counter">0 / 500</small><p id="editArtistPostError" class="track-editor-error" role="alert"></p><div class="track-editor-actions"><button type="button" id="cancelArtistPostEdit">Отмена</button><button type="submit" class="primary">Сохранить</button></div></form></dialog>
+<audio id="audio"></audio><script src="app.js?v=20261108av"></script>
 </body></html>
