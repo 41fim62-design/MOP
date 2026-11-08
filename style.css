@@ -262,3 +262,5 @@
 @media(prefers-reduced-motion:reduce){
  .cassette.playing .left-spool,.cassette.playing .right-spool,.cassette.playing .tape-flow{animation:none!important}
 }
+
+.delete-playlist{min-height:38px;padding:8px 13px;border:1px solid #49313b;border-radius:22px;background:#21171d;color:#d8aab6;font:600 12px system-ui;cursor:pointer}.delete-playlist:hover{border-color:#b56b83;background:#38202a}
