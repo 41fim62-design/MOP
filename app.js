@@ -93,7 +93,8 @@ function getVisibleTrackEntries(){
  const playlist=playlists.find(p=>p.id===activePlaylistId);
  const visible=tracks.map((track,index)=>({track,index})).filter(({track})=>{
   const searchable=[track.name,track.artist].filter(Boolean).join(' ').toLocaleLowerCase('ru');
-  const artistFilter=document.getElementById('artistFilter')?.value||'';\n  return searchable.includes(query)&&(!artistFilter||(track.artist||'').trim()===artistFilter)&&(!showFavorites||track.favorite)&&(!playlist||playlist.trackIds.includes(track.id));
+  const artistFilter=document.getElementById('artistFilter')?.value||'';
+  return searchable.includes(query)&&(!artistFilter||(track.artist||'').trim()===artistFilter)&&(!showFavorites||track.favorite)&&(!playlist||playlist.trackIds.includes(track.id));
  });
  const sort=document.getElementById('trackSort')?.value||'newest';
  visible.sort((a,b)=>{
