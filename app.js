@@ -136,6 +136,82 @@ function exportTrack(index){
  document.body.appendChild(link);link.click();link.remove();
  setTimeout(()=>URL.revokeObjectURL(url),1500);
 }
+
+function blobToDataUrl(blob){
+ return new Promise((resolve,reject)=>{
+  const reader=new FileReader();
+  reader.onload=()=>resolve(reader.result);
+  reader.onerror=()=>reject(reader.error||new Error('Не удалось прочитать аудио'));
+  reader.readAsDataURL(blob);
+ });
+}
+function dataUrlToBlob(dataUrl){
+ if(typeof dataUrl!=='string'||!/^data:audio\/[a-z0-9.+-]+;base64,/i.test(dataUrl))throw new Error('В резервной копии найден некорректный аудиофайл');
+ const parts=dataUrl.split(',');
+ const mime=parts[0].slice(5).split(';')[0];
+ const binary=atob(parts[1]);
+ const bytes=new Uint8Array(binary.length);
+ for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
+ return new Blob([bytes],{type:mime});
+}
+function downloadJson(data,name){
+ const blob=new Blob([JSON.stringify(data)],{type:'application/json'});
+ const url=URL.createObjectURL(blob),link=document.createElement('a');
+ link.href=url;link.download=name;document.body.appendChild(link);link.click();link.remove();
+ setTimeout(()=>URL.revokeObjectURL(url),3000);
+}
+async function exportBackup(){
+ if(!db)await openLibrary();
+ const saved=await readTracks();
+ if(!saved.length&&!playlists.length){alert('Пока нечего сохранять. Сначала добавь музыку или создай плейлист.');return}
+ if(!confirm('Создать полную резервную копию профиля, плейлистов и аудиофайлов? Большая музыкальная библиотека может занять много памяти и времени.'))return;
+ const button=document.getElementById('exportBackup');
+ if(button){button.disabled=true;button.textContent='Готовим копию…'}
+ try{
+  const backupTracks=[];
+  for(const track of saved){
+   backupTracks.push({id:track.id,name:track.name||'Без названия',artist:track.artist||'',type:track.type||track.blob?.type||'audio/mpeg',favorite:!!track.favorite,data:await blobToDataUrl(track.blob)});
+  }
+  downloadJson({format:'MOP_BACKUP',version:1,createdAt:new Date().toISOString(),artistProfile,playlists,tracks:backupTracks},'MOP-backup-'+new Date().toISOString().slice(0,10)+'.json');
+  alert('Резервная копия создана. Сохрани JSON-файл отдельно от телефона, чтобы не потерять музыку.');
+ }catch(error){alert('Не удалось создать копию. Возможно, библиотека слишком большая или не хватает памяти устройства.')}
+ finally{if(button){button.disabled=false;button.textContent='↓ Резервная копия'}}
+}
+async function importBackup(file){
+ if(!file)return;
+ if(file.size>500*1024*1024){alert('Файл копии больше 500 МБ. Для импорта выбери файл меньшего размера.');return}
+ try{
+  const backup=JSON.parse(await file.text());
+  if(!backup||backup.format!=='MOP_BACKUP'||backup.version!==1||!Array.isArray(backup.tracks)||!Array.isArray(backup.playlists)||!backup.artistProfile||typeof backup.artistProfile!=='object')throw new Error('Формат файла не распознан');
+  if(!confirm('Импорт заменит текущую музыку, плейлисты и профиль на данные из резервной копии. Продолжить?'))return;
+  const restored=backup.tracks.map((t,index)=>{
+   const blob=dataUrlToBlob(t.data);
+   const record={name:String(t.name||'Без названия').slice(0,180),artist:String(t.artist||'').slice(0,100),blob,type:blob.type||String(t.type||''),favorite:!!t.favorite};
+   if(Number.isSafeInteger(t.id)&&t.id>0)record.id=t.id;
+   return record;
+  });
+  const restoredIds=new Set(restored.map(t=>t.id).filter(Number.isSafeInteger));
+  const cleanPlaylists=backup.playlists.filter(p=>p&&typeof p.name==='string').slice(0,200).map((p,i)=>({
+   id:typeof p.id==='string'?p.id:'pl-import-'+i,
+   name:p.name.slice(0,60),
+   trackIds:Array.isArray(p.trackIds)?[...new Set(p.trackIds.filter(id=>Number.isSafeInteger(id)&&restoredIds.has(id)))]:[]
+  }));
+  if(!db)await openLibrary();
+  await new Promise((resolve,reject)=>{
+   const tx=db.transaction('tracks','readwrite'),store=tx.objectStore('tracks');
+   store.clear();
+   restored.forEach(t=>store.put(t));
+   tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||new Error('Импорт отменён'));
+  });
+  artistProfile={name:String(backup.artistProfile.name||'Мой проект').slice(0,50),bio:String(backup.artistProfile.bio||'').slice(0,180)};
+  localStorage.setItem('mop-artist-profile',JSON.stringify(artistProfile));
+  playlists=cleanPlaylists;savePlaylists();activePlaylistId='';
+  audio.pause();audio.removeAttribute('src');audio.load();current=-1;
+  renderPlaylistOptions();await refreshLibrary();
+  alert('Резервная копия восстановлена. Музыка, профиль и плейлисты загружены.');
+ }catch(error){alert('Не удалось импортировать копию: '+(error.message||'проверь файл и свободную память'))}
+}
+
 function createPlaylist(){const name=prompt('Название нового плейлиста:');if(!name||!name.trim())return;const p={id:'pl-'+Date.now()+'-'+Math.random().toString(36).slice(2,7),name:name.trim().slice(0,60),trackIds:[]};playlists.push(p);activePlaylistId=p.id;savePlaylists();renderPlaylistOptions();render();}
 function deletePlaylist(){const p=playlists.find(x=>x.id===activePlaylistId);if(!p)return;if(!confirm('Удалить плейлист «'+p.name+'»? Сами аудиофайлы останутся в библиотеке.'))return;playlists=playlists.filter(x=>x.id!==p.id);activePlaylistId='';savePlaylists();renderPlaylistOptions();render();}
 function addToPlaylist(index){const track=tracks[index];if(!track)return;if(!activePlaylistId){alert('Сначала создай плейлист и выбери его в списке.');return}const p=playlists.find(x=>x.id===activePlaylistId);if(!p)return;if(p.trackIds.includes(track.id))p.trackIds=p.trackIds.filter(id=>id!==track.id);else p.trackIds.push(track.id);savePlaylists();render();}
@@ -195,6 +271,8 @@ document.getElementById('saveArtistProfile')?.addEventListener('click',()=>{cons
 document.getElementById('editArtistProfile')?.addEventListener('click',()=>{if(sharedArtistProfile)return;document.getElementById('artistNameInput').value=artistProfile.name||'';document.getElementById('artistBioInput').value=artistProfile.bio||'';document.getElementById('artistEditor').hidden=false;document.getElementById('artistNameInput').focus();});
 document.getElementById('cancelArtistEdit')?.addEventListener('click',()=>{document.getElementById('artistEditor').hidden=true;});
 document.getElementById('createPlaylist')?.addEventListener('click',createPlaylist);
+document.getElementById('exportBackup')?.addEventListener('click',exportBackup);
+document.getElementById('importBackupInput')?.addEventListener('change',e=>{importBackup(e.target.files?.[0]);e.target.value=''});
 document.getElementById('deletePlaylist')?.addEventListener('click',deletePlaylist);
 document.getElementById('playlistSelect')?.addEventListener('change',e=>{activePlaylistId=e.target.value;renderPlaylistOptions();render()});
 document.getElementById('favoritesFilter')?.addEventListener('click',e=>{
