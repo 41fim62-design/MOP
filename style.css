@@ -450,3 +450,7 @@ body.file-dragging{outline:3px solid #a78bfa;outline-offset:-7px}
 
 /* Artist post live preview */
 .artist-post-preview{padding:12px;border:1px dashed #69558c;border-radius:10px;background:linear-gradient(145deg,#1a1622,#100f15)}.artist-post-preview p{margin:8px 0 0;white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px;line-height:1.55;min-height:20px}.artist-post-preview.is-empty p{color:var(--muted);font-style:italic}.artist-post-composer>small{display:block}
+
+
+/* Native modal editor for artist publications */
+.artist-post-editor textarea{width:100%;box-sizing:border-box;min-height:150px;resize:vertical;padding:12px;border:1px solid #44394f;border-radius:9px;background:#100e16;color:#fff;font:inherit;line-height:1.5;outline:none}.artist-post-editor textarea:focus{border-color:#b49aff}.post-edit-counter{justify-self:end;color:var(--muted);font-size:11px;font-variant-numeric:tabular-nums}
