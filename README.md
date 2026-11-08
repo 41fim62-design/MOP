@@ -49,3 +49,5 @@ Open the GitHub Pages site over HTTPS in a modern browser. On supported browsers
 - Shared artist cards include a follow/unfollow action. Followed shared profiles are saved locally, listed in My subscriptions, and can be reopened or unfollowed. This is device-local; cross-device synchronized subscriptions require a shared backend.
 
 - Artist publication feed: create short local posts about releases and music, optionally referencing the currently selected track, then share a standalone read-only post URL. Posts remain on the creator's device; shared URLs carry only text and metadata, never audio files.
+
+- Shared post interactions: local emoji reaction counters and shareable reply links. Reactions are stored only in the reacting browser; replies are generated as separate links that the listener sends to the author. There is no automatic cross-user comment feed or server synchronization.
