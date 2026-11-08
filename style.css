@@ -191,3 +191,13 @@
   box-shadow:0 0 0 1px #f0e6d5,0 0 0 3px #3c3432;
 }
 .reel i{inset:42%;background:#28232a;border:2px solid #e7dece}
+
+/* SVG cassette mechanism: visible magnetic tape winding with progress-driven radii */
+.window{padding:0 8px;overflow:hidden}
+.tape-mechanism{display:block;width:100%;height:100%;overflow:visible}
+.tape-strip{filter:drop-shadow(0 0 2px #e8bb7a)}
+.left-spool,.right-spool{transform-box:fill-box;transform-origin:center}
+.cassette.playing .left-spool{animation:spoolTurn 1.1s linear infinite}
+.cassette.playing .right-spool{animation:spoolTurnReverse 1.1s linear infinite}
+@keyframes spoolTurn{to{transform:rotate(360deg)}}
+@keyframes spoolTurnReverse{to{transform:rotate(-360deg)}}
