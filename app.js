@@ -259,14 +259,16 @@ function render(){
   const duration=document.createElement('span');duration.className='track-duration';duration.dataset.trackDuration=String(t.id);duration.textContent=Number.isFinite(t.duration)?fmt(t.duration):'…';
   info.append(title,subtitle,duration);
   const favorite=document.createElement('button');favorite.className='track-favorite';favorite.type='button';favorite.setAttribute('aria-label',t.favorite?'Убрать из избранного':'Добавить в избранное');favorite.title=favorite.getAttribute('aria-label');favorite.textContent=t.favorite?'★':'☆';
+  const lyricsBtn=document.createElement('button');lyricsBtn.className='track-lyrics';lyricsBtn.type='button';lyricsBtn.setAttribute('aria-label','Текст композиции');lyricsBtn.title='Текст / заметки';lyricsBtn.textContent='≡';
   const add=document.createElement('button');add.className='track-add-playlist';add.type='button';add.setAttribute('aria-label','Добавить или убрать из плейлиста');add.title=add.getAttribute('aria-label');add.textContent=inPlaylist?'✓':'＋';
   const play=document.createElement('button');play.className='track-play';play.type='button';play.setAttribute('aria-label','Играть');play.textContent='▶';
   const editBtn=document.createElement('button');editBtn.className='track-edit';editBtn.type='button';editBtn.setAttribute('aria-label','Изменить название, исполнителя и альбом');editBtn.title='Изменить данные трека';editBtn.textContent='✎';
   const shareBtn=document.createElement('button');shareBtn.className='track-share';shareBtn.type='button';shareBtn.setAttribute('aria-label','Поделиться аудиофайлом');shareBtn.title='Поделиться треком';shareBtn.textContent='↗';
   const exportBtn=document.createElement('button');exportBtn.className='track-export';exportBtn.type='button';exportBtn.setAttribute('aria-label','Скачать копию трека');exportBtn.title='Скачать копию';exportBtn.textContent='↓';
   const remove=document.createElement('button');remove.className='track-delete';remove.type='button';remove.setAttribute('aria-label','Удалить трек');remove.title='Удалить трек';remove.textContent='×';
-  row.append(selectLabel,art,info,favorite,add,editBtn,shareBtn,exportBtn,play,remove);
+  row.append(selectLabel,art,info,lyricsBtn,favorite,add,editBtn,shareBtn,exportBtn,play,remove);
   row.onclick=()=>load(i,true);
+  lyricsBtn.onclick=e=>{e.stopPropagation();editTrackLyrics(i)};
   favorite.onclick=e=>{e.stopPropagation();toggleFavorite(i)};
   add.onclick=e=>{e.stopPropagation();addToPlaylist(i)};
   editBtn.onclick=e=>{e.stopPropagation();editTrackMetadata(i)};
@@ -410,7 +412,7 @@ async function exportBackup(){
   const backupTracks=[];
   for(const track of saved){
    const sourceBlob=track.blob?.type?.startsWith('audio/')?track.blob:new Blob([track.blob],{type:guessAudioMime(track.name)});
-   backupTracks.push({id:track.id,name:track.name||'Без названия',artist:track.artist||'',type:sourceBlob.type,favorite:!!track.favorite,album:track.album||'',duration:Number.isFinite(track.duration)?track.duration:null,data:await blobToDataUrl(sourceBlob),cover:track.cover instanceof Blob?await blobToDataUrl(track.cover):null});
+   backupTracks.push({id:track.id,name:track.name||'Без названия',artist:track.artist||'',type:sourceBlob.type,favorite:!!track.favorite,album:track.album||'',duration:Number.isFinite(track.duration)?track.duration:null,data:await blobToDataUrl(sourceBlob),cover:track.cover instanceof Blob?await blobToDataUrl(track.cover):null,lyrics:String(track.lyrics||'').slice(0,20000)});
   }
   downloadJson({format:'MOP_BACKUP',version:1,createdAt:new Date().toISOString(),artistProfile,playlists,tracks:backupTracks},'MOP-backup-'+new Date().toISOString().slice(0,10)+'.json');
   alert('Резервная копия создана. Сохрани JSON-файл отдельно от телефона, чтобы не потерять музыку.');
@@ -426,7 +428,7 @@ async function importBackup(file){
   if(!confirm('Импорт заменит текущую музыку, плейлисты и профиль на данные из резервной копии. Продолжить?'))return;
   const restored=backup.tracks.map((t,index)=>{
    const blob=dataUrlToBlob(t.data);
-   const record={name:String(t.name||'Без названия').slice(0,180),artist:String(t.artist||'').slice(0,100),album:String(t.album||'').slice(0,120),...(Number.isFinite(t.duration)&&t.duration>0?{duration:t.duration}:{}),blob,type:blob.type||String(t.type||''),favorite:!!t.favorite};
+   const record={name:String(t.name||'Без названия').slice(0,180),artist:String(t.artist||'').slice(0,100),album:String(t.album||'').slice(0,120),...(Number.isFinite(t.duration)&&t.duration>0?{duration:t.duration}:{}),blob,type:blob.type||String(t.type||''),favorite:!!t.favorite,lyrics:String(t.lyrics||'').slice(0,20000)};
    if(t.cover)record.cover=dataUrlToBlob(t.cover);
    if(Number.isSafeInteger(t.id)&&t.id>0)record.id=t.id;
    return record;
@@ -469,6 +471,14 @@ async function toggleFavorite(index){
   });
   track.favorite=next;render();
  }catch(error){alert('Не удалось обновить избранное. Попробуй ещё раз.')}
+}
+function editTrackLyrics(index){
+ const track=tracks[index],dialog=document.getElementById('trackLyricsEditor');if(!track||!dialog)return;
+ document.getElementById('lyricsTrackId').value=String(track.id);
+ document.getElementById('trackLyricsTitle').textContent=track.name||'Текст композиции';
+ document.getElementById('trackLyricsText').value=track.lyrics||'';
+ document.getElementById('trackLyricsError').textContent='';
+ dialog.showModal();document.getElementById('trackLyricsText').focus();
 }
 function editTrackMetadata(index){
  const track=tracks[index],dialog=document.getElementById('trackEditor');if(!track||!dialog)return;
@@ -713,4 +723,11 @@ document.getElementById('trackEditorForm')?.addEventListener('submit',async even
  const name=document.getElementById('editTrackName').value.trim().slice(0,180),artist=document.getElementById('editTrackArtist').value.trim().slice(0,100),album=document.getElementById('editTrackAlbum').value.trim().slice(0,120),error=document.getElementById('editTrackError'),save=event.submitter;
  if(!track||!name){error.textContent='Укажи название композиции.';return}if(!db){error.textContent='Хранилище пока недоступно.';return}if(save)save.disabled=true;
  try{await new Promise((resolve,reject)=>{const tx=db.transaction('tracks','readwrite'),store=tx.objectStore('tracks'),request=store.get(track.id);request.onsuccess=()=>{if(!request.result){reject(new Error('Трек не найден'));return}request.result.name=name;request.result.artist=artist;request.result.album=album;store.put(request.result)};request.onerror=()=>reject(request.error);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||new Error('Операция отменена'))});track.name=name;track.artist=artist;track.album=album;render();dialog.close()}catch(err){error.textContent='Не удалось сохранить. Попробуй ещё раз.'}finally{if(save)save.disabled=false}
+});
+
+document.getElementById('cancelTrackLyrics')?.addEventListener('click',()=>document.getElementById('trackLyricsEditor')?.close());
+document.getElementById('trackLyricsForm')?.addEventListener('submit',async event=>{
+ event.preventDefault();const dialog=document.getElementById('trackLyricsEditor'),id=Number(document.getElementById('lyricsTrackId').value),track=tracks.find(item=>String(item.id)===String(id)),lyrics=document.getElementById('trackLyricsText').value.slice(0,20000),error=document.getElementById('trackLyricsError'),save=event.submitter;
+ if(!track||!db){error.textContent='Библиотека пока недоступна.';return}if(save)save.disabled=true;
+ try{await new Promise((resolve,reject)=>{const tx=db.transaction('tracks','readwrite'),store=tx.objectStore('tracks'),request=store.get(track.id);request.onsuccess=()=>{if(!request.result){reject(new Error('Трек не найден'));return}request.result.lyrics=lyrics;store.put(request.result)};request.onerror=()=>reject(request.error);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||new Error('Операция отменена'))});track.lyrics=lyrics;dialog.close()}catch(err){error.textContent='Не удалось сохранить текст. Попробуй ещё раз.'}finally{if(save)save.disabled=false}
 });
