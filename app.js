@@ -40,19 +40,21 @@ function trackWord(n){
  return 'треков';
 }
 function render(){
- document.getElementById('trackCount').textContent=tracks.length+' '+trackWord(tracks.length);
+ const selected=playlists.find(p=>p.id===activePlaylistId);
+ document.getElementById('trackCount').textContent=tracks.length+' '+trackWord(tracks.length)+(selected?' · в «'+selected.name+'»: '+selected.trackIds.length:'');
  if(!tracks.length){tracksEl.innerHTML='<div class="empty">Здесь появятся твои треки.<br>Нажми «Загрузить музыку», чтобы добавить аудио с устройства.</div>';return}
  tracksEl.innerHTML='';
  const query=(searchInput?.value||'').trim().toLocaleLowerCase('ru');
  const activePlaylist=playlists.find(p=>p.id===activePlaylistId);
- const visible=tracks.map((track,index)=>({track,index})).filter(({track})=>track.name.toLocaleLowerCase('ru').includes(query)&&(!showFavorites||track.favorite)&&(!activePlaylist||activePlaylist.trackIds.includes(track.id)));
+ const visible=tracks.map((track,index)=>({track,index})).filter(({track})=>track.name.toLocaleLowerCase('ru').includes(query)&&(!showFavorites||track.favorite));
  if(!visible.length){
-  tracksEl.innerHTML='<div class="empty">'+(activePlaylist?'В этом плейлисте пока нет треков. Добавь их кнопкой ＋.':showFavorites?'В избранном пока пусто. Нажми ☆ у любого трека.':query?'Ничего не найдено. Попробуй другое название.':'В библиотеке пока нет треков.')+'</div>';
+  tracksEl.innerHTML='<div class="empty">'+(showFavorites?'В избранном пока пусто. Нажми ☆ у любого трека.':query?'Ничего не найдено. Попробуй другое название.':'В библиотеке пока нет треков.')+'</div>';
   return;
  }
  visible.forEach(({track:t,index:i})=>{
   const row=document.createElement('div');row.className='track'+(i===current?' active':'');
-  row.innerHTML='<div class="track-art">M</div><div class="track-info"><b></b><span>Сохранено на устройстве</span></div><button class="track-favorite" aria-label="Добавить в избранное" title="Добавить в избранное">'+(t.favorite?'★':'☆')+'</button><button class="track-add-playlist" aria-label="Добавить в плейлист" title="Добавить в выбранный плейлист">＋</button><button class="track-play" aria-label="Играть">▶</button><button class="track-delete" aria-label="Удалить трек" title="Удалить трек">×</button>';
+  const inPlaylist=activePlaylist&&activePlaylist.trackIds.includes(t.id);
+  row.innerHTML='<div class="track-art">M</div><div class="track-info"><b></b><span>'+(inPlaylist?'В плейлисте «'+activePlaylist.name+'»':'Сохранено на устройстве')+'</span></div><button class="track-favorite" aria-label="Добавить в избранное" title="Добавить в избранное">'+(t.favorite?'★':'☆')+'</button><button class="track-add-playlist" aria-label="Добавить в плейлист" title="Добавить в выбранный плейлист">'+(inPlaylist?'✓':'＋')+'</button><button class="track-play" aria-label="Играть">▶</button><button class="track-delete" aria-label="Удалить трек" title="Удалить трек">×</button> ';
   row.querySelector('b').textContent=t.name;
   row.onclick=()=>load(i,true);
   row.querySelector('.track-favorite').onclick=e=>{e.stopPropagation();toggleFavorite(i)};
@@ -62,7 +64,7 @@ function render(){
  });
 }
 function createPlaylist(){const name=prompt('Название нового плейлиста:');if(!name||!name.trim())return;const p={id:'pl-'+Date.now()+'-'+Math.random().toString(36).slice(2,7),name:name.trim(),trackIds:[]};playlists.push(p);activePlaylistId=p.id;savePlaylists();renderPlaylistOptions();render();}
-function addToPlaylist(index){const track=tracks[index];if(!track)return;if(!activePlaylistId){alert('Сначала создай плейлист и выбери его в списке.');return}const p=playlists.find(x=>x.id===activePlaylistId);if(!p)return;if(!p.trackIds.includes(track.id))p.trackIds.push(track.id);savePlaylists();render();}
+function addToPlaylist(index){const track=tracks[index];if(!track)return;if(!activePlaylistId){alert('Сначала создай плейлист и выбери его в списке.');return}const p=playlists.find(x=>x.id===activePlaylistId);if(!p)return;if(p.trackIds.includes(track.id))p.trackIds=p.trackIds.filter(id=>id!==track.id);else p.trackIds.push(track.id);savePlaylists();render();}
 async function toggleFavorite(index){
  const track=tracks[index];if(!track||!db)return;
  const next=!track.favorite;
