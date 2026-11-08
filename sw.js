@@ -1,5 +1,5 @@
-const CACHE='mop-shell-v17';
-const FILES=['./','./index.html','./style.css','./app.js','./manifest.json'];
+const CACHE='mop-shell-v18';
+const FILES=['./','./index.html','./style.css','./app.js','./manifest.json','./icon.svg'];
 
 self.addEventListener('install',event=>{
   event.waitUntil((async()=>{
