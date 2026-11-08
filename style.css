@@ -390,3 +390,5 @@ body.file-dragging{outline:3px solid #a78bfa;outline-offset:-7px}
 @media(max-width:560px){.catalog-tools{flex-wrap:wrap;gap:8px}.catalog-tools label{font-size:11px}#artistFilter,#trackSort{flex:1 1 135px;max-width:none}}
 
 #recentTracksFilter.active{border-color:var(--violet);background:#2a2038;color:#e3d3ff}
+
+#playedTracksFilter.active{border-color:var(--violet);background:#2a2038;color:#e3d3ff}
