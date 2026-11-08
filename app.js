@@ -546,6 +546,13 @@ document.addEventListener('drop',async event=>{
  const zone=document.getElementById('dropOverlay');if(zone)zone.hidden=true;
  await addAudioFiles(event.dataTransfer.files);
 });
+function saveTrackDuration(id,duration){
+ return new Promise((resolve,reject)=>{
+  const tx=db.transaction('tracks','readwrite'),store=tx.objectStore('tracks'),request=store.get(id);
+  request.onsuccess=()=>{if(request.result){request.result.duration=duration;store.put(request.result)}};
+  tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||new Error('Не удалось сохранить длительность'));
+ });
+}
 async function scanTrackDurations(){
  const pending=tracks.filter(track=>!Number.isFinite(track.duration));
  let cursor=0;
@@ -558,7 +565,7 @@ async function scanTrackDurations(){
     const timer=setTimeout(done,5000);
     probe.preload='metadata';
     probe.onloadedmetadata=()=>{
-     if(Number.isFinite(probe.duration)&&probe.duration>0){track.duration=probe.duration;const badge=document.querySelector('[data-track-duration="'+String(track.id)+'"]');if(badge)badge.textContent=fmt(track.duration)}
+     if(Number.isFinite(probe.duration)&&probe.duration>0){track.duration=probe.duration;saveTrackDuration(track.id,track.duration).catch(()=>{});const badge=document.querySelector('[data-track-duration="'+String(track.id)+'"]');if(badge)badge.textContent=fmt(track.duration)}
      done();
     };
     probe.onerror=done;probe.src=track.url;
