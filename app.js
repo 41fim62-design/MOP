@@ -503,6 +503,7 @@ document.getElementById('trackSort')?.addEventListener('change',render);
 document.getElementById('artistFilter')?.addEventListener('change',render);
 document.getElementById('recentTracksFilter')?.addEventListener('click',()=>{showRecent=!showRecent;const button=document.getElementById('recentTracksFilter');button?.classList.toggle('active',showRecent);button?.setAttribute('aria-pressed',String(showRecent));render()});
 document.getElementById('playedTracksFilter')?.addEventListener('click',()=>{showPlayed=!showPlayed;const button=document.getElementById('playedTracksFilter');button?.classList.toggle('active',showPlayed);button?.setAttribute('aria-pressed',String(showPlayed));render()});
+document.getElementById('clearPlayHistory')?.addEventListener('click',()=>{if(!playedTrackIds.length){alert('История прослушивания уже пуста.');return}if(!confirm('Очистить историю прослушивания?'))return;playedTrackIds=[];try{localStorage.removeItem('mop-play-history')}catch(error){}render()});
 document.getElementById('playVisibleTracks')?.addEventListener('click',()=>{const queue=getPlaybackOrder();if(queue.length)load(queue[0],true);else alert('В этом разделе пока нет композиций.');});
 document.getElementById('shareArtistProfile')?.addEventListener('click',shareArtistProfile);
 document.getElementById('artistPhotoButton')?.addEventListener('click',chooseArtistPhoto);
