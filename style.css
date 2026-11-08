@@ -235,3 +235,4 @@
 .search-box>span{font-size:23px;line-height:1}
 .search-box input{width:100%;min-width:0;border:0;outline:0;background:transparent;color:var(--white);font:inherit;font-size:14px}
 .search-box input::placeholder{color:#777482}
+\n/* Favorites */\n.favorites-filter{display:inline-flex;align-items:center;gap:7px;margin:0 0 16px;padding:9px 14px;border:1px solid #40384d;border-radius:22px;background:#17141f;color:#c9c2d4;font:600 12px system-ui;cursor:pointer;transition:background .15s,border-color .15s,color .15s}\n.favorites-filter:hover,.favorites-filter.active{background:#302344;border-color:var(--violet);color:#e6d9ff}\n.track-favorite{flex:0 0 34px;width:34px;height:34px;border:1px solid transparent;border-radius:50%;background:transparent;color:#a99abf;font-size:22px;line-height:1;cursor:pointer}\n.track-favorite:hover{background:#302344;border-color:#68518d;color:#d9c5ff}\n
