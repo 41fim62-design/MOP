@@ -8,6 +8,14 @@ const searchInput=document.getElementById('trackSearch');
 const durationEl=document.getElementById('duration'),elapsedEl=document.getElementById('elapsed');
 let tracks=[],current=-1,db=null,showFavorites=false,playlists=loadPlaylists(),activePlaylistId='',artistProfile=loadArtistProfile(),sharedArtistProfile=readSharedArtistProfile();
 const selectedTrackIds=new Set();
+let shuffleEnabled=false,repeatMode='off',shuffleOrder=[],shuffleSignature='';
+try{const playbackPrefs=JSON.parse(localStorage.getItem('mop-playback-options')||'{}');shuffleEnabled=!!playbackPrefs.shuffle;repeatMode=['off','all','one'].includes(playbackPrefs.repeat)?playbackPrefs.repeat:'off'}catch(error){}
+function savePlaybackOptions(){try{localStorage.setItem('mop-playback-options',JSON.stringify({shuffle:shuffleEnabled,repeat:repeatMode}))}catch(error){}}
+function updatePlaybackOptions(){
+ const shuffle=document.getElementById('shuffleToggle'),repeat=document.getElementById('repeatToggle');
+ if(shuffle){shuffle.classList.toggle('active',shuffleEnabled);shuffle.setAttribute('aria-pressed',String(shuffleEnabled));shuffle.textContent=shuffleEnabled?'🔀':'⇄';shuffle.title=shuffleEnabled?'Случайный порядок включён':'Включить случайный порядок';shuffle.setAttribute('aria-label',shuffle.title)}
+ if(repeat){const labels={off:'↻',all:'↻',one:'↻¹'};repeat.textContent=labels[repeatMode];repeat.classList.toggle('active',repeatMode!=='off');repeat.title=repeatMode==='off'?'Повтор выключен':repeatMode==='all'?'Повтор всего списка':'Повтор одного трека';repeat.setAttribute('aria-label',repeat.title);repeat.setAttribute('aria-pressed',String(repeatMode!=='off'))}
+}
 function loadArtistProfile(){try{return JSON.parse(localStorage.getItem('mop-artist-profile'))||{name:'Мой проект',bio:'Независимый исполнитель на MOP'}}catch(e){return {name:'Мой проект',bio:'Независимый исполнитель на MOP'}}}
 function readSharedArtistProfile(){
  const params=new URLSearchParams(location.search);
@@ -88,7 +96,29 @@ function getVisibleTrackEntries(){
  return visible;
 }
 function playbackQueue(){return getVisibleTrackEntries().map(item=>item.index);}
-function stepTrack(direction){const queue=playbackQueue();if(!queue.length)return;let position=queue.indexOf(current);if(position<0)position=direction>0?-1:0;const next=position+direction;if(next<0||next>=queue.length){if(direction<0)load(queue[queue.length-1],true);else{audio.pause();audio.currentTime=0;sync()}return}load(queue[next],true);}
+function getPlaybackOrder(){
+ const queue=playbackQueue(),signature=queue.join(',');
+ if(!shuffleEnabled)return queue;
+ if(signature!==shuffleSignature||!shuffleOrder.length){
+  shuffleSignature=signature;shuffleOrder=queue.slice();
+  for(let i=shuffleOrder.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[shuffleOrder[i],shuffleOrder[j]]=[shuffleOrder[j],shuffleOrder[i]]}
+  const currentPosition=shuffleOrder.indexOf(current);
+  if(currentPosition>0)[shuffleOrder[0],shuffleOrder[currentPosition]]=[shuffleOrder[currentPosition],shuffleOrder[0]];
+ }
+ return shuffleOrder.filter(index=>queue.includes(index));
+}
+function stepTrack(direction){
+ if(repeatMode==='one'&&direction>0){audio.currentTime=0;audio.play().catch(()=>{});return}
+ const queue=getPlaybackOrder();if(!queue.length)return;
+ let position=queue.indexOf(current);if(position<0)position=direction>0?-1:0;
+ let next=position+direction;
+ if(next<0||next>=queue.length){
+  if(repeatMode==='all')next=direction>0?0:queue.length-1;
+  else if(direction<0)next=queue.length-1;
+  else{audio.pause();audio.currentTime=0;sync();return}
+ }
+ load(queue[next],true);
+}
 const fmt=s=>!Number.isFinite(s)?'0:00':Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0');
 function openLibrary(){
  return new Promise((resolve,reject)=>{
@@ -544,6 +574,12 @@ playBtn.onclick=()=>{
  if(audio.paused)audio.play().catch(()=>{});else audio.pause();
 };
 document.getElementById('next').onclick=()=>stepTrack(1);
+document.getElementById('shuffleToggle')?.addEventListener('click',()=>{
+ shuffleEnabled=!shuffleEnabled;shuffleOrder=[];shuffleSignature='';savePlaybackOptions();updatePlaybackOptions();
+});
+document.getElementById('repeatToggle')?.addEventListener('click',()=>{
+ repeatMode=repeatMode==='off'?'all':repeatMode==='all'?'one':'off';savePlaybackOptions();updatePlaybackOptions();
+});
 document.getElementById('prev').onclick=()=>{if(audio.currentTime>3){audio.currentTime=0;return}stepTrack(-1)};
 audio.addEventListener('play',sync);audio.addEventListener('pause',sync);
 audio.addEventListener('ended',()=>{savePlaybackState();stepTrack(1)});
@@ -560,7 +596,7 @@ seek.addEventListener('input',()=>{if(Number.isFinite(audio.duration)&&audio.dur
 document.getElementById('volume').addEventListener('input',e=>audio.volume=Number(e.target.value));
 audio.volume=.8;
 (async()=>{
- renderPlaylistOptions();renderArtistProfile();render();
+ renderPlaylistOptions();renderArtistProfile();updatePlaybackOptions();render();
  try{await openLibrary();await refreshLibrary()}
  catch(error){tracksEl.innerHTML='<div class="empty">Локальное хранилище недоступно. Музыку можно добавить после разрешения хранилища браузера.</div>'}
 })();
