@@ -349,7 +349,7 @@ async function importBackup(file){
    restored.forEach(t=>store.put(t));
    tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||new Error('Импорт отменён'));
   });
-  artistProfile={name:String(backup.artistProfile.name||'Мой проект').slice(0,50),bio:String(backup.artistProfile.bio||'').slice(0,180)};
+  artistProfile={name:String(backup.artistProfile.name||'Мой проект').slice(0,50),bio:String(backup.artistProfile.bio||'').slice(0,180),accent:/^#[0-9a-f]{6}$/i.test(backup.artistProfile.accent||'')?backup.artistProfile.accent:'#a78bfa',...(typeof backup.artistProfile.photo==='string'&&backup.artistProfile.photo.startsWith('data:image/')?{photo:backup.artistProfile.photo}:{})};
   localStorage.setItem('mop-artist-profile',JSON.stringify(artistProfile));
   playlists=cleanPlaylists;savePlaylists();activePlaylistId='';
   audio.pause();audio.removeAttribute('src');audio.load();current=-1;
