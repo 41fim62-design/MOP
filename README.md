@@ -5,7 +5,7 @@ MOP is a Russian-language, mobile-friendly music player for independent artists.
 ## Current features
 - Import audio files from the device.
 - Store the music library locally in the browser with IndexedDB.
-- Search tracks and manage favorites.
+- Search tracks, edit track titles and artist names, and manage favorites.
 - Share audio files with the device share sheet where supported, or download them for manual sharing.
 - Create playlists, add or remove tracks, and play a selected playlist in order.
 - Edit the artist profile.
