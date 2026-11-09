@@ -73,3 +73,5 @@ Open the GitHub Pages site over HTTPS in a modern browser. On supported browsers
 - Local artist publications can now be exported to a UTF-8 CSV file for spreadsheet apps. The export includes post date, artist, text, linked track and album, pinned status, and edit date; it exports the complete local feed rather than only currently filtered results.
 
 - The artist publication composer now has a dedicated clear-draft control. It is disabled when no draft exists, asks for confirmation before clearing, updates the live preview, and removes the saved local draft without touching published posts.
+
+- The artist publication feed now includes a persistent “Pinned only” filter. It can be combined with publication search, shows the count within the pinned subset, and does not modify or delete posts.
