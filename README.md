@@ -71,3 +71,5 @@ Open the GitHub Pages site over HTTPS in a modern browser. On supported browsers
 - The local artist feed now has instant search across publication text, linked track titles, and album names, with a live visible/total post count and a clear no-results state. Search remains local to the current browser.
 
 - Local artist publications can now be exported to a UTF-8 CSV file for spreadsheet apps. The export includes post date, artist, text, linked track and album, pinned status, and edit date; it exports the complete local feed rather than only currently filtered results.
+
+- The artist publication composer now has a dedicated clear-draft control. It is disabled when no draft exists, asks for confirmation before clearing, updates the live preview, and removes the saved local draft without touching published posts.
