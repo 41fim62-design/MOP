@@ -462,3 +462,7 @@ body.file-dragging{outline:3px solid #a78bfa;outline-offset:-7px}
 
 /* Artist publication export controls */
 .artist-posts-tools{display:flex;align-items:center;gap:9px}.artist-post-export{padding:7px 10px;border:1px solid #6e579d;border-radius:18px;background:#211b30;color:#eee;font-size:10px;white-space:nowrap;cursor:pointer}.artist-post-export:hover{border-color:#b49aff;background:#302342}@media(max-width:420px){.artist-posts-heading{align-items:flex-start}.artist-posts-tools{flex-direction:column;align-items:flex-end}}
+
+
+/* Artist post draft controls */
+.artist-post-compose-tools{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:5px 0 10px}.artist-post-clear-draft{border:1px solid #57496e;border-radius:16px;padding:6px 10px;background:transparent;color:#c9b9e4;font-size:11px;cursor:pointer}.artist-post-clear-draft:hover:not(:disabled){border-color:#b49aff;color:#fff}.artist-post-clear-draft:disabled{opacity:.38;cursor:not-allowed}
