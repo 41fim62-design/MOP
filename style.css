@@ -471,3 +471,7 @@ body.file-dragging{outline:3px solid #a78bfa;outline-offset:-7px}
 /* Pinned publication filter */
 .artist-post-filter{border:1px solid #57496e;border-radius:16px;padding:7px 10px;background:transparent;color:#c9b9e4;font-size:10px;white-space:nowrap;cursor:pointer}.artist-post-filter:hover,.artist-post-filter.is-active{border-color:#b49aff;background:#302342;color:#fff}
 @media(max-width:520px){.artist-posts-tools{flex-wrap:wrap;justify-content:flex-end}.artist-posts-tools #artistPostCount{width:100%;text-align:right}}
+
+
+/* Inbox search result hint */
+#artistInboxSearchHint{display:block;margin-top:4px;color:#a99bbd;font-size:10px;min-height:1em}
