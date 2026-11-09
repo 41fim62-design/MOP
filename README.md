@@ -75,3 +75,5 @@ Open the GitHub Pages site over HTTPS in a modern browser. On supported browsers
 - The artist publication composer now has a dedicated clear-draft control. It is disabled when no draft exists, asks for confirmation before clearing, updates the live preview, and removes the saved local draft without touching published posts.
 
 - The artist publication feed now includes a persistent “Pinned only” filter. It can be combined with publication search, shows the count within the pinned subset, and does not modify or delete posts.
+
+- The listener inbox search now reports the number of matching replies out of the total and clears the result hint when the query is empty. Search remains local and does not change stored messages.
